@@ -663,7 +663,22 @@ function planLabel(m, key) {
   if (m.exempt) return '면제';
   if (!m.plan) return null;
   const p = m.plan;
-  if (p.type === '완납' && key.startsWith(String(p.year))) return '완납';
+  if (p.type === '완납' && key.startsWith(String(p.year))) {
+    // 55000원 완납: 최초 납부 월에는 금액 표시, 이후 월은 '선납' 표시
+    if (p.amount === 55000) {
+      // 납부 기록이 있는 가장 첫 번째 월 찾기
+      const yearMonths = D.months
+        .filter(mo => mo.key.startsWith(String(p.year)))
+        .map(mo => mo.key)
+        .sort();
+      // amt에 55000이 기록된 월 찾기
+      const paidMonth = Object.keys(m.amt || {}).find(k => m.amt[k] === 55000 && k.startsWith(String(p.year)));
+      const firstMonth = paidMonth || yearMonths[0];
+      if (key === firstMonth) return '완납'; // 해당 월: 55000 금액 표시
+      return '선납_완납'; // 이후 월: 선납 배지
+    }
+    return '완납';
+  }
   if (p.type === '선납' && key >= p.start && key <= p.end) return '선납';
   return null;
 }
@@ -862,12 +877,18 @@ function render() {
       const pd = isPaid(m, mo.key);
       const pl = planLabel(m, mo.key);
       const fee = getFee(m, mo.key);
-      const inner = pl
-        ? `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">${pl}</span></span>`
-        : pd
-          ? `<span class="pv pv-ok">${fee.toLocaleString()}</span>`
-          : `<span class="pv pv-no">미납</span>`;
-      const clickFn = pl ? '' : `onclick="toggleP(${m.id},'${mo.key}')"`;
+      let inner;
+      if (pl === '선납_완납') {
+        // 55000 완납자의 이후 월: '선납' 배지, pv-ok 초록색
+        inner = `<span class="pv pv-ok">5,000<span class="plb">선납</span></span>`;
+      } else if (pl) {
+        inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">${pl}</span></span>`;
+      } else if (pd) {
+        inner = `<span class="pv pv-ok">${fee.toLocaleString()}</span>`;
+      } else {
+        inner = `<span class="pv pv-no">미납</span>`;
+      }
+      const clickFn = (pl === '완납' || pl === '선납_완납' || pl === '선납') ? '' : `onclick="toggleP(${m.id},'${mo.key}')"`;
       return `<td class="pcell" ${clickFn}>${inner}</td>`;
     }).join('');
 
@@ -1219,6 +1240,18 @@ function saveMonth() {
   if (D.months.find(x => x.key === key)) { alert('이미 추가된 월입니다.'); return; }
   D.months.push({ key, label: `${parseInt(m)}월`, fee });
   D.months.sort((a, b) => a.key.localeCompare(b.key));
+
+  // 완납/선납 회원 자동 pay 처리
+  D.members.forEach(mb => {
+    if (!mb.plan) return;
+    const p = mb.plan;
+    if (p.type === '완납' && key.startsWith(String(p.year))) {
+      mb.pay[key] = true;
+    } else if (p.type === '선납' && key >= p.start && key <= p.end) {
+      mb.pay[key] = true;
+    }
+  });
+
   R.cm = key;
   sv(); closeOv('mom'); render();
 }
