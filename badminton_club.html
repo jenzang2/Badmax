@@ -786,7 +786,10 @@ function render() {
   const pamt = nonExempt.filter(m => isPaid(m, R.cm)).reduce((s, m) => s + getFee(m, R.cm), 0);
 
   document.getElementById('stats').innerHTML = `
-    <div class="sc"><div class="sl">정식 회원</div><div class="sv b">${officialMembers.length}명${minorCount?`<span style="font-size:11px;color:#c2410c;margin-left:3px">+${minorCount}자녀</span>`:''}</div></div>
+    <div class="sc"><div class="sl">총 회원</div>
+      <div class="sv b">${officialMembers.length}명</div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:2px">톡방 인원 ${officialMembers.length+2}명</div>
+    </div>
     <div class="sc"><div class="sl">남 / 여</div><div class="sv" style="font-size:16px">${male} / ${officialMembers.length-male}</div></div>
     <div class="sc"><div class="sl">${cm.label} 납부</div><div class="sv g">${paid}명</div></div>
     <div class="sc"><div class="sl">${cm.label} 미납</div><div class="sv r">${nonExempt.length-paid}명</div></div>
