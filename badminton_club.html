@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🏸 배드민턴 모임 관리</title>
+<title>BADMAX 관리</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -222,7 +222,7 @@ select.fi{cursor:pointer}
   <div class="lc">
     <span class="li">🏸</span>
     <div class="lt">배드민턴 모임</div>
-    <div class="ls">운영진 전용 관리 시스템</div>
+    <div class="ls">BADMAX 운영진 전용</div>
     <input class="linp" type="password" id="pw" placeholder="비밀번호를 입력하세요" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="lbtn" onclick="doLogin()">로그인</button>
     <div class="lerr" id="lerr"></div>
@@ -234,8 +234,8 @@ select.fi{cursor:pointer}
   <div class="hdr">
     <div class="hdr-l">
       <div>
-        <div class="hdr-logo">🏸 배드민턴 모임</div>
-        <div class="hdr-sub">회비 관리 시스템</div>
+        <div class="hdr-logo">BADMAX</div>
+        <div class="hdr-sub">회원관리 시스템</div>
       </div>
     </div>
     <div class="hdr-r">
@@ -317,6 +317,19 @@ select.fi{cursor:pointer}
     </select>
   </div>
   <div class="fg"><label>메모</label><input class="fi" id="fm" placeholder="특이사항, 참고사항..."></div>
+  <div class="sdiv"></div>
+  <div class="sttl">💰 회비 설정</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div class="fg">
+      <label>월 기준 회비 (원)</label>
+      <input class="fi" id="f-fee" type="number" placeholder="5000 (기본값)" min="0">
+    </div>
+    <div class="fg">
+      <label>가입 시작월</label>
+      <input class="fi" id="f-start" type="month" placeholder="미설정시 전체">
+    </div>
+  </div>
+  <div style="font-size:11px;color:var(--tx3);margin-top:-6px;margin-bottom:8px">시작월 이전 달은 자동으로 — 처리됩니다</div>
   <div class="mbtns">
     <button class="mbtn mcan" onclick="closeOv('mm')">취소</button>
     <button class="mbtn mdng" id="mm-del" style="display:none" onclick="deleteMember()" title="회원 데이터 완전 삭제">🗑 삭제</button>
@@ -524,8 +537,10 @@ function normMember(m) {
     plan:   m.plan || null,
     exempt: (m.role === '운영진') ? true : !!m.exempt,
     minor: m.role === '미성년',
-    fgId:   m.fgId || null,
-    fgRel:  m.fgRel || ''
+    fgId:      m.fgId || null,
+    fgRel:     m.fgRel || '',
+    memberFee: m.memberFee || null,
+    startMonth: m.startMonth || null
   };
 }
 function normData(val) {
@@ -636,6 +651,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // ── HELPERS ──────────────────────────────────────────
 function isPaid(m, key) {
   if (m.exempt) return true;
+  if (isNA(m, key)) return true; // 가입 전 월은 미납으로 안 잡음
   if (m.plan) {
     const p = m.plan;
     if (p.type === '완납' && key.startsWith(String(p.year))) return true;
@@ -653,7 +669,12 @@ function planLabel(m, key) {
 }
 function getFee(m, key) {
   if (m.exempt) return 0;
-  return m.amt[key] || (D.months.find(x => x.key === key)?.fee || 5000);
+  if (m.amt && m.amt[key] != null) return m.amt[key];
+  return m.memberFee || (D.months.find(x => x.key === key)?.fee || 5000);
+}
+function isNA(m, key) {
+  // 가입 시작월 이전은 해당없음(-) 처리
+  return m.startMonth && key < m.startMonth;
 }
 function age(y) { return new Date().getFullYear() - y + 1; }
 function mkey(y, m) { return `${y}-${String(m).padStart(2,'0')}`; }
@@ -834,6 +855,7 @@ function render() {
 
     const cells = visMons.map(mo => {
       if (isExempt) return `<td><span class="pv pv-ex">면제</span></td>`;
+      if (isNA(m, mo.key)) return `<td><span style="color:var(--tx3);font-size:13px">—</span></td>`;
       const pd = isPaid(m, mo.key);
       const pl = planLabel(m, mo.key);
       const fee = getFee(m, mo.key);
@@ -977,7 +999,7 @@ function openMM() {
   document.getElementById('mm-s').textContent = '추가';
   document.getElementById('mm-del').style.display = 'none';
   document.getElementById('mm-wd').style.display = 'none';
-  ['fn','fy','fm','frc'].forEach(id => document.getElementById(id).value = '');
+  ['fn','fy','fm','frc','f-fee','f-start'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fg2').value = '남';
   document.getElementById('fr').value = '일반';
   document.getElementById('frcw').style.display = 'none';
@@ -1006,6 +1028,8 @@ function openEM(id) {
     document.getElementById('frcw').style.display = '';
   }
   document.getElementById('fm').value = m.memo || '';
+  document.getElementById('f-fee').value = m.memberFee || '';
+  document.getElementById('f-start').value = m.startMonth || '';
   const spId = m.fgId ? D.members.find(x => x.fgId === m.fgId && x.id !== id)?.id : null;
   fillFamDrop(id, spId, m.fgRel || '배우자');
   document.getElementById('mm').classList.add('on');
@@ -1038,9 +1062,11 @@ function saveMember() {
     alert('미성년 회원은 보호자(가족회원)를 반드시 연결해야 합니다.');
     return;
   }
+  const memberFee = parseInt(document.getElementById('f-fee').value) || null;
+  const startMonth = document.getElementById('f-start').value || null;
   if (EID) {
     const m = D.members.find(x => x.id === EID);
-    Object.assign(m, { name, year, g, role, memo });
+    Object.assign(m, { name, year, g, role, memo, memberFee, startMonth });
     if (famSel) {
       const t = D.members.find(x => x.id == famSel);
       if (t) { const fg = t.fgId || ('fg_' + Date.now()); t.fgId = fg; if (!t.fgRel) t.fgRel = famRel; m.fgId = fg; m.fgRel = famRel; }
@@ -1051,7 +1077,7 @@ function saveMember() {
       const t = D.members.find(x => x.id == famSel);
       if (t) { fgId = t.fgId || ('fg_' + Date.now()); t.fgId = fgId; if (!t.fgRel) t.fgRel = famRel; fgRel = famRel; }
     }
-    D.members.push({ id, name, year, g, role, fgId, fgRel, pay: {}, amt: {}, plan: null, memo });
+    D.members.push({ id, name, year, g, role, fgId, fgRel, pay: {}, amt: {}, plan: null, memo, memberFee, startMonth });
   }
   sv(); closeOv('mm'); render();
 }
