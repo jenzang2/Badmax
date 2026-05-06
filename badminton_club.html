@@ -198,12 +198,6 @@ select.fi{cursor:pointer}
 .fab{display:none;position:fixed;bottom:20px;right:16px;z-index:40;background:#1e1b4b;color:white;border:none;border-radius:50px;padding:13px 20px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 4px 20px rgba(30,27,75,.35)}
 @media(max-width:500px){.fab{display:flex;align-items:center;gap:6px}.abtn{display:none}}
 
-/* RESIZE HANDLE */
-.resize-handle{height:12px;background:var(--sf2);border:1px solid var(--bd);border-top:none;border-radius:0 0 var(--radius2) var(--radius2);cursor:ns-resize;display:flex;align-items:center;justify-content:center;gap:3px;margin-bottom:12px;user-select:none;transition:background .2s}
-.resize-handle:hover{background:#e2e4ec}
-.resize-handle span{width:28px;height:2px;border-radius:2px;background:var(--bd)}
-.resize-handle:hover span{background:#9ca3af}
-
 /* VIEW MODE SEGMENTED CONTROL */
 .mode-seg{display:flex;border:1px solid var(--bd);border-radius:8px;overflow:hidden;flex-shrink:0}
 .mseg{padding:6px 12px;font-size:12px;font-family:inherit;background:white;color:var(--tx2);border:none;border-right:1px solid var(--bd);cursor:pointer;transition:all .15s;white-space:nowrap}
@@ -272,7 +266,6 @@ select.fi{cursor:pointer}
         </div>
       </div>
       <div class="tw" id="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
-      <div class="resize-handle" id="rh"><span></span><span></span><span></span></div>
       <div id="ubox" class="ubox"></div>
     </div>
 
@@ -535,9 +528,23 @@ function ld() {
     db.ref('club').on('value', snapshot => {
       const val = snapshot.val();
       if (val && val.members) {
-        const prevCm = R.cm;
         D = val;
-        // 현재 선택된 월 유지
+        // Firebase는 빈 객체/배열을 null로 저장 → 복원
+        D.members = (D.members || []).map(m => ({
+          ...m,
+          pay:  (m.pay  && typeof m.pay  === 'object') ? m.pay  : {},
+          amt:  (m.amt  && typeof m.amt  === 'object') ? m.amt  : {},
+          plan: m.plan || null,
+          exempt: !!m.exempt,
+          fgId: m.fgId || null,
+          fgRel: m.fgRel || ''
+        }));
+        D.withdrawn = Array.isArray(D.withdrawn) ? D.withdrawn.map(m => ({
+          ...m,
+          pay: (m.pay && typeof m.pay === 'object') ? m.pay : {},
+          amt: (m.amt && typeof m.amt === 'object') ? m.amt : {},
+        })) : [];
+        D.months = Array.isArray(D.months) ? D.months : [];
         if (!D.months.find(m => m.key === R.cm)) {
           R.cm = D.months[D.months.length - 1]?.key || R.cm;
         }
@@ -1171,57 +1178,6 @@ document.querySelectorAll('.ov').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('on'); });
 });
 
-// ── RESIZE TABLE ──────────────────────────────────────
-(function() {
-  let dragging = false, startY = 0, startH = 0;
-  const tw = document.getElementById('tw');
-  const rh = document.getElementById('rh');
-  if (!tw || !rh) return;
-
-  rh.addEventListener('mousedown', e => {
-    dragging = true;
-    startY = e.clientY;
-    startH = tw.offsetHeight;
-    document.body.style.cursor = 'ns-resize';
-    document.body.style.userSelect = 'none';
-    e.preventDefault();
-  });
-  // Touch support
-  rh.addEventListener('touchstart', e => {
-    dragging = true;
-    startY = e.touches[0].clientY;
-    startH = tw.offsetHeight;
-    e.preventDefault();
-  }, { passive: false });
-
-  document.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    const newH = Math.max(120, Math.min(window.innerHeight - 200, startH + (e.clientY - startY)));
-    tw.style.maxHeight = newH + 'px';
-  });
-  document.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    const newH = Math.max(120, Math.min(window.innerHeight - 200, startH + (e.touches[0].clientY - startY)));
-    tw.style.maxHeight = newH + 'px';
-  }, { passive: false });
-
-  const stop = () => {
-    if (!dragging) return;
-    dragging = false;
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-    // 마지막 크기 저장
-    try { localStorage.setItem('tw_h', tw.offsetHeight); } catch(e) {}
-  };
-  document.addEventListener('mouseup', stop);
-  document.addEventListener('touchend', stop);
-
-  // 저장된 높이 복원
-  try {
-    const saved = localStorage.getItem('tw_h');
-    if (saved) tw.style.maxHeight = saved + 'px';
-  } catch(e) {}
-})();
 </script>
 </body>
 </html>
