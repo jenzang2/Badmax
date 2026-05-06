@@ -111,6 +111,7 @@ tbody tr:hover:not(.divr) td{background:#fafbfd}
 .rb{display:inline-block;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700;margin-left:3px;vertical-align:middle}
 .rb-adm{background:var(--adm2);color:var(--adm)}
 .rb-sub{background:#f3f4f6;color:#4b5563}
+.rb-minor{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
 .gb{display:inline-block;padding:2px 6px;border-radius:20px;font-size:10px;font-weight:600}
 .gm{background:var(--b2);color:var(--b)}
 .gf{background:#fce7f3;color:#be185d}
@@ -295,6 +296,7 @@ select.fi{cursor:pointer}
       <option value="운영진">운영진</option>
       <option value="부운영진">부운영진</option>
       <option value="일반" selected>일반회원</option>
+      <option value="미성년">미성년(비회원)</option>
       <option value="기타">기타 (직접입력)</option>
     </select>
   </div>
@@ -520,7 +522,8 @@ function normMember(m) {
     pay:    (m.pay && typeof m.pay === 'object' && !Array.isArray(m.pay)) ? m.pay : {},
     amt:    (m.amt && typeof m.amt === 'object' && !Array.isArray(m.amt)) ? m.amt : {},
     plan:   m.plan || null,
-    exempt: !!m.exempt,
+    exempt: (m.role === '운영진') ? true : !!m.exempt,
+    minor: m.role === '미성년',
     fgId:   m.fgId || null,
     fgRel:  m.fgRel || ''
   };
@@ -595,32 +598,40 @@ function setSyncStatus(state) {
 }
 
 // ── AUTH ────────────────────────────────────────────
+function startApp() {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  if (db) {
+    R.cm = R.cm || M3;
+    ld();
+  } else {
+    ld();
+    R.cm = D.months[D.months.length - 1]?.key || M3;
+    render();
+    showFbSetupBanner();
+  }
+}
 function doLogin() {
   if (document.getElementById('pw').value === PW) {
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    if (db) {
-      // Firebase: 리스너가 데이터 로드 후 자동 render()
-      R.cm = R.cm || M3;
-      ld();
-    } else {
-      // localStorage 폴백
-      ld();
-      R.cm = D.months[D.months.length - 1]?.key || M3;
-      render();
-      // 미설정 안내 배너 표시
-      showFbSetupBanner();
-    }
+    try { localStorage.setItem('bm_auth', '1'); } catch(e) {}
+    startApp();
   } else {
     document.getElementById('lerr').textContent = '비밀번호가 올바르지 않습니다.';
   }
 }
 function doLogout() {
+  try { localStorage.removeItem('bm_auth'); } catch(e) {}
   document.getElementById('login').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
   document.getElementById('pw').value = '';
   document.getElementById('lerr').textContent = '';
 }
+// 새로고침 시 로그인 유지
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    if (localStorage.getItem('bm_auth') === '1') startApp();
+  } catch(e) {}
+});
 
 // ── HELPERS ──────────────────────────────────────────
 function isPaid(m, key) {
@@ -746,14 +757,16 @@ function render() {
   const cm = D.months.find(x => x.key === R.cm) || D.months[D.months.length - 1];
   if (!cm) return;
   const tot = D.members.length;
-  const male = D.members.filter(m => m.g === '남').length;
-  const nonExempt = D.members.filter(m => !m.exempt);
+  const officialMembers = D.members.filter(m => m.role !== '미성년');
+  const male = officialMembers.filter(m => m.g === '남').length;
+  const nonExempt = officialMembers.filter(m => !m.exempt);
+  const minorCount = D.members.filter(m => m.role === '미성년').length;
   const paid = nonExempt.filter(m => isPaid(m, R.cm)).length;
   const pamt = nonExempt.filter(m => isPaid(m, R.cm)).reduce((s, m) => s + getFee(m, R.cm), 0);
 
   document.getElementById('stats').innerHTML = `
-    <div class="sc"><div class="sl">전체 회원</div><div class="sv b">${tot}명</div></div>
-    <div class="sc"><div class="sl">남 / 여</div><div class="sv" style="font-size:16px">${male} / ${tot-male}</div></div>
+    <div class="sc"><div class="sl">정식 회원</div><div class="sv b">${officialMembers.length}명${minorCount?`<span style="font-size:11px;color:#c2410c;margin-left:3px">+${minorCount}자녀</span>`:''}</div></div>
+    <div class="sc"><div class="sl">남 / 여</div><div class="sv" style="font-size:16px">${male} / ${officialMembers.length-male}</div></div>
     <div class="sc"><div class="sl">${cm.label} 납부</div><div class="sv g">${paid}명</div></div>
     <div class="sc"><div class="sl">${cm.label} 미납</div><div class="sv r">${nonExempt.length-paid}명</div></div>
     <div class="sc"><div class="sl">${cm.label} 수납액</div><div class="sv yw" style="font-size:14px">${pamt.toLocaleString()}원</div></div>`;
@@ -811,11 +824,12 @@ function render() {
     const rowCls = isAdm ? 'row-adm' : (isSub ? 'row-fam' : (m._famHead ? 'row-famhead' : (hasPlan ? 'row-pr' : (anyUnpaid ? 'row-un' : ''))));
 
     // Name cell
+    const isMinor = m.role === '미성년';
     let nameHtml;
     if (isSub) {
-      nameHtml = `<span class="name-indent">${m.name}<span class="rel-badge">${m._rel}</span></span>`;
+      nameHtml = `<span class="name-indent">${m.name}<span class="rel-badge">${m._rel}</span>${isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}</span>`;
     } else {
-      nameHtml = `<span style="font-weight:${isAdm?600:400}">${m.name}</span>${isAdm ? `<span class="rb rb-adm">${m.role}</span>` : ''}${m.fgId && m._indent === 0 ? `<span class="fai" title="가족회원" style="font-size:10px">👨‍👩</span>` : ''}`;
+      nameHtml = `<span style="font-weight:${isAdm?600:400};color:${isMinor?'var(--tx2)':''}">${m.name}</span>${isAdm ? `<span class="rb rb-adm">${m.role}</span>` : isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}${m.fgId && m._indent === 0 ? `<span class="fai" title="가족회원" style="font-size:10px">👨‍👩</span>` : ''}`;
     }
 
     const cells = visMons.map(mo => {
@@ -832,7 +846,7 @@ function render() {
       return `<td class="pcell" ${clickFn}>${inner}</td>`;
     }).join('');
 
-    return `<tr class="${rowCls}">
+    return `<tr class="${rowCls}" ondblclick="openEM(${m.id})" style="cursor:pointer">
       <td>${nameHtml}</td>
       <td style="color:var(--tx2)">${m.year}</td>
       <td><span class="gb ${m.g === '남' ? 'gm' : 'gf'}">${m.g}</span></td>
@@ -849,26 +863,33 @@ function render() {
   renderUnpaid(cm);
 }
 
+let R_ubox = null; // 미납박스 전용 선택 월
 function renderUnpaid(cm) {
   if (!cm) cm = D.months.find(x => x.key === R.cm);
   if (!cm) return;
-  const unpaid = D.members.filter(m => !isPaid(m, R.cm));
+  if (!R_ubox) R_ubox = cm.key;
+  const ucm = D.months.find(x => x.key === R_ubox) || cm;
+  const unpaid = D.members.filter(m => !m.exempt && !isPaid(m, ucm.key));
   const kakaoText = unpaid.length
-    ? `[${cm.label} 회비 미납 안내]\n\n${unpaid.map(m => m.name).join(', ')} 님,\n이번 달 회비 납부 부탁드립니다 🏸\n\n회비: 5,000원\n계좌: (계좌번호 입력)`
-    : `✅ ${cm.label} 전원 납부 완료!`;
+    ? `[${ucm.label} 회비 미납 안내]\n\n${unpaid.map(m => m.name).join(', ')} 님,\n이번 달 회비 납부 부탁드립니다 🏸\n\n회비: 5,000원\n계좌: (계좌번호 입력)`
+    : `✅ ${ucm.label} 전원 납부 완료!`;
+  const monthTabs = D.months.map(mo => `
+    <button onclick="R_ubox='${mo.key}';renderUnpaid()" style="padding:3px 10px;border-radius:6px;border:1px solid ${mo.key===R_ubox?'#1e1b4b':'var(--bd)'};background:${mo.key===R_ubox?'#1e1b4b':'white'};color:${mo.key===R_ubox?'white':'var(--tx2)'};font-size:11px;font-family:inherit;cursor:pointer;font-weight:${mo.key===R_ubox?700:400}">${mo.label}</button>
+  `).join('');
   document.getElementById('ubox').innerHTML = `
     <div class="ut">
-      <span>⚠️ ${cm.label} 미납 ${unpaid.length}명</span>
-      <span style="font-size:11px;color:var(--tx3);font-weight:400">카카오 문구 자동 생성</span>
+      <span>⚠️ 미납자 확인</span>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">${monthTabs}</div>
     </div>
+    <div style="margin-bottom:8px;font-size:12px;color:var(--tx2)">${ucm.label} 미납 <strong style="color:var(--r)">${unpaid.length}명</strong></div>
     <div class="chips">
       ${unpaid.length
         ? unpaid.map(m => `<span class="chip">${m.name}</span>`).join('')
-        : `<span class="ok-chip">✅ 전원 납부 완료!</span>`}
+        : `<span class="ok-chip">✅ ${ucm.label} 전원 납부 완료!</span>`}
     </div>
     <div class="kbox" id="kbox" contenteditable="true">${kakaoText.replace(/\n/g,'<br>')}</div>
     <div class="krow">
-      <span class="knote">내용을 직접 수정한 뒤 복사하여 카카오톡에 붙여넣기</span>
+      <span class="knote">카카오톡에 바로 붙여넣기</span>
       <button class="kbtn" onclick="copyKakao()" id="copybtn">📋 복사</button>
     </div>`;
 }
