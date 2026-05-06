@@ -869,7 +869,7 @@ function renderUnpaid(cm) {
   if (!cm) return;
   if (!R_ubox) R_ubox = cm.key;
   const ucm = D.months.find(x => x.key === R_ubox) || cm;
-  const unpaid = D.members.filter(m => !m.exempt && !isPaid(m, ucm.key));
+  const unpaid = D.members.filter(m => !m.exempt && m.role !== '미성년' && !isPaid(m, ucm.key));
   const kakaoText = unpaid.length
     ? `[${ucm.label} 회비 미납 안내]\n\n${unpaid.map(m => m.name).join(', ')} 님,\n이번 달 회비 납부 부탁드립니다 🏸\n\n회비: 5,000원\n계좌: (계좌번호 입력)`
     : `✅ ${ucm.label} 전원 납부 완료!`;
@@ -952,9 +952,20 @@ function toggleP(id, key) {
   if (!m) return;
   const was = !!m.pay[key];
   m.pay[key] = !was;
-  if (!was && m.fgId && m.fgRel === '배우자') {
-    const sp = D.members.find(x => x.fgId === m.fgId && x.id !== id && x.fgRel === '배우자' && !isPaid(x, key));
-    if (sp && confirm(`${sp.name} 님도 함께 납부 처리할까요?`)) sp.pay[key] = true;
+
+  // 납부 처리 시 가족 구성원 순차 확인
+  if (!was && m.fgId) {
+    // 배우자 먼저, 그 다음 자녀 순으로 미납자만
+    const famUnpaid = D.members
+      .filter(x => x.fgId === m.fgId && x.id !== id && !isPaid(x, key))
+      .sort((a, b) => (REL_ORDER[a.fgRel] ?? 9) - (REL_ORDER[b.fgRel] ?? 9));
+
+    famUnpaid.forEach(fm => {
+      const relLabel = fm.fgRel ? `(${fm.fgRel})` : '';
+      if (confirm(`${fm.name}${relLabel}님도 납부 처리할까요?`)) {
+        fm.pay[key] = true;
+      }
+    });
   }
   sv(); render();
 }
@@ -985,7 +996,7 @@ function openEM(id) {
   document.getElementById('fn').value = m.name;
   document.getElementById('fy').value = m.year;
   document.getElementById('fg2').value = m.g;
-  const std = ['운영진','부운영진','일반'];
+  const std = ['운영진','부운영진','일반','미성년'];
   if (std.includes(m.role)) {
     document.getElementById('fr').value = m.role;
     document.getElementById('frcw').style.display = 'none';
@@ -1022,6 +1033,11 @@ function saveMember() {
   const memo = document.getElementById('fm').value.trim();
   const famSel = document.getElementById('ffm').value;
   const famRel = document.getElementById('ffr').value;
+  // 미성년은 보호자 연결 필수
+  if (role === '미성년' && !famSel) {
+    alert('미성년 회원은 보호자(가족회원)를 반드시 연결해야 합니다.');
+    return;
+  }
   if (EID) {
     const m = D.members.find(x => x.id === EID);
     Object.assign(m, { name, year, g, role, memo });
