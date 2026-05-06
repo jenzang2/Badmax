@@ -505,66 +505,72 @@ let R = { view: 'm', cm: M3, q: '', fu: false, mode: 'def', hiddenCols: new Set(
 let EID = null, PMI = null, WMI = null, PT = '월납';
 
 // ── STORAGE ─────────────────────────────────────────
-let syncTimeout = null;
+let _saving = false;
+
+// Firebase는 배열을 객체로 변환할 수 있음 → 배열로 복원
+function toArr(v) {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.filter(Boolean);
+  return Object.values(v).filter(Boolean);
+}
+function normMember(m) {
+  if (!m) return null;
+  return {
+    ...m,
+    pay:    (m.pay && typeof m.pay === 'object' && !Array.isArray(m.pay)) ? m.pay : {},
+    amt:    (m.amt && typeof m.amt === 'object' && !Array.isArray(m.amt)) ? m.amt : {},
+    plan:   m.plan || null,
+    exempt: !!m.exempt,
+    fgId:   m.fgId || null,
+    fgRel:  m.fgRel || ''
+  };
+}
+function normData(val) {
+  if (!val) return JSON.parse(JSON.stringify(INIT));
+  return {
+    months:    toArr(val.months),
+    withdrawn: toArr(val.withdrawn).map(normMember).filter(Boolean),
+    members:   toArr(val.members).map(normMember).filter(Boolean)
+  };
+}
+
 function sv() {
+  const snap = JSON.parse(JSON.stringify(D));
   if (db) {
-    // Firebase 실시간 저장
+    _saving = true;
     setSyncStatus('saving');
-    if (syncTimeout) clearTimeout(syncTimeout);
-    syncTimeout = setTimeout(() => {
-      db.ref('club').set(D)
-        .then(() => setSyncStatus('ok'))
-        .catch(() => setSyncStatus('error'));
-    }, 400); // 400ms 디바운스 (연속 클릭 시 한 번만 저장)
+    db.ref('club').set(snap)
+      .then(() => { _saving = false; setSyncStatus('ok'); })
+      .catch(e => { _saving = false; setSyncStatus('error'); console.error(e); });
   } else {
-    // Firebase 미설정 시 localStorage 폴백
-    try { localStorage.setItem('bm_club_v2', JSON.stringify(D)); } catch(e) {}
+    try { localStorage.setItem('bm_club_v2', JSON.stringify(snap)); } catch(e) {}
   }
 }
+
 function ld() {
   if (db) {
     setSyncStatus('connecting');
-    // 실시간 리스너 — 누군가 수정하면 즉시 반영
     db.ref('club').on('value', snapshot => {
+      if (_saving) return; // 내가 저장 중이면 덮어쓰기 방지
       const val = snapshot.val();
-      if (val && val.members) {
-        D = val;
-        // Firebase는 빈 객체/배열을 null로 저장 → 복원
-        D.members = (D.members || []).map(m => ({
-          ...m,
-          pay:  (m.pay  && typeof m.pay  === 'object') ? m.pay  : {},
-          amt:  (m.amt  && typeof m.amt  === 'object') ? m.amt  : {},
-          plan: m.plan || null,
-          exempt: !!m.exempt,
-          fgId: m.fgId || null,
-          fgRel: m.fgRel || ''
-        }));
-        D.withdrawn = Array.isArray(D.withdrawn) ? D.withdrawn.map(m => ({
-          ...m,
-          pay: (m.pay && typeof m.pay === 'object') ? m.pay : {},
-          amt: (m.amt && typeof m.amt === 'object') ? m.amt : {},
-        })) : [];
-        D.months = Array.isArray(D.months) ? D.months : [];
-        if (!D.months.find(m => m.key === R.cm)) {
+      if (val && (val.members || val.months)) {
+        D = normData(val);
+        if (!D.months.find(m => m.key === R.cm))
           R.cm = D.months[D.months.length - 1]?.key || R.cm;
-        }
-        render();
       } else {
-        // 첫 연결 — 초기 데이터 올리기
         D = JSON.parse(JSON.stringify(INIT));
-        db.ref('club').set(D);
+        db.ref('club').set(JSON.parse(JSON.stringify(INIT)));
       }
       setSyncStatus('ok');
+      render();
     });
-    // 연결 상태 감지
     db.ref('.info/connected').on('value', snap => {
-      setSyncStatus(snap.val() ? 'ok' : 'offline');
+      if (!snap.val()) setSyncStatus('offline');
     });
   } else {
-    // localStorage 폴백
     try {
       const r = localStorage.getItem('bm_club_v2');
-      if (r) { D = JSON.parse(r); return; }
+      if (r) { D = normData(JSON.parse(r)); return; }
     } catch(e) {}
     D = JSON.parse(JSON.stringify(INIT));
   }
