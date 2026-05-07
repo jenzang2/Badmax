@@ -79,7 +79,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow:auto;max-height:calc(100vh - 260px);margin-bottom:12px;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;min-width:700px}
 thead th{position:sticky;top:0;z-index:4;background:var(--sf2);box-shadow:0 1px 0 var(--bd)}
-th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}
+th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);border-right:1px solid #e8eaf0;text-align:center;white-space:nowrap}
 th.clickable{cursor:pointer;transition:background .15s}
 .arr-th{cursor:pointer;color:var(--b);font-size:15px;font-weight:700;padding:2px 8px;min-width:30px;text-align:center;white-space:nowrap}
 .arr-th:hover{background:#dbeafe!important}
@@ -88,10 +88,12 @@ th:first-child{text-align:left}
 /* totals header row */
 .th-tot th{background:#f7f8fc;font-size:12px;font-weight:700;color:var(--g);border-bottom:2px solid var(--bd)}
 .th-tot th:first-child{color:var(--tx2);font-weight:500}
-td{padding:8px 10px;font-size:13px;border-bottom:1px solid #f0f2f7;text-align:center;vertical-align:middle}
+td{padding:8px 10px;font-size:13px;border-bottom:1px solid #f0f2f7;border-right:1px solid #f0f2f7;text-align:center;vertical-align:middle}
+td:last-child{border-right:none}
 td:first-child{text-align:left}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover:not(.divr) td{background:#fafbfd}
+table{border:1px solid #e8eaf0;border-radius:var(--radius2)}
 .divr td{background:#f0f2f7;font-size:10px;color:var(--tx3);text-align:center;padding:4px;letter-spacing:4px;font-weight:600}
 .divr:hover td{background:#f0f2f7!important}
 
@@ -291,6 +293,10 @@ tr.row-active td{box-shadow:inset 0 0 0 2px #4f46e5!important;background:#eef2ff
 <div class="ov" id="mm">
 <div class="modal">
   <div class="mttl" id="mm-t">👤 회원 추가</div>
+  <div id="mm-danger" style="display:none;display:none;justify-content:flex-end;gap:6px;margin-bottom:12px">
+    <button class="mbtn mdng" id="mm-wd" style="flex:0;padding:7px 14px;font-size:12px" onclick="openWdFromEdit()" title="탈퇴처리">🚪 탈퇴처리</button>
+    <button class="mbtn mdng" id="mm-del" style="flex:0;padding:7px 14px;font-size:12px" onclick="deleteMember()" title="완전삭제">🗑 삭제</button>
+  </div>
   <div class="fg"><label>이름 *</label><input class="fi" id="fn" placeholder="홍길동"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
     <div class="fg"><label>출생연도</label><input class="fi" id="fy" type="number" placeholder="1990" min="1940" max="2015"></div>
@@ -342,8 +348,6 @@ tr.row-active td{box-shadow:inset 0 0 0 2px #4f46e5!important;background:#eef2ff
   <div style="font-size:11px;color:var(--tx3);margin-top:-6px;margin-bottom:8px">시작월 이전 달은 자동으로 — 처리됩니다</div>
   <div class="mbtns">
     <button class="mbtn mcan" onclick="closeOv('mm')">취소</button>
-    <button class="mbtn mdng" id="mm-del" style="display:none" onclick="deleteMember()" title="회원 데이터 완전 삭제">🗑 삭제</button>
-    <button class="mbtn mdng" id="mm-wd" style="display:none" onclick="openWdFromEdit()" title="탈퇴회원 목록으로 이동" style="background:#f97316;border-color:#f97316">🚪 탈퇴처리</button>
     <button class="mbtn mpri" id="mm-s" onclick="saveMember()">추가</button>
   </div>
 </div>
@@ -724,7 +728,10 @@ function planLabel(m, key) {
     }
     return '완납_rest'; // amt 없으면 전부 완납 배지만
   }
-  if (p.type === '선납' && key >= p.start && key <= p.end) return '선납';
+  if (p.type === '선납' && key >= p.start && key <= p.end) {
+    if (p.late) return '선납_후납';
+    return '선납';
+  }
   return null;
 }
 function getFee(m, key) {
@@ -890,13 +897,17 @@ function render() {
     ? `<th class="arr-th" onclick="showNextMonths()" title="${hiddenAfter.map(m=>m.label).join(',')}">▶</th>`
     : `<th style="min-width:6px;padding:0"></th>`;
 
+  // 합계행과 헤더행의 열 수를 동일하게 맞춤
+  const hasPrev = hiddenBefore.length > 0;
+  const hasNext = hiddenAfter.length > 0;
+
   document.getElementById('th').innerHTML = `
     <tr class="th-tot">
       <th style="text-align:left;color:var(--tx2);font-size:10px">합계</th>
       <th></th><th></th>
-      <th></th>
+      ${hasPrev ? '<th></th>' : ''}
       ${visMons.map(mo => `<th>${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`).join('')}
-      <th></th>
+      ${hasNext ? '<th></th>' : ''}
       <th></th>
     </tr>
     <tr>
@@ -945,8 +956,9 @@ function render() {
       const pd = isPaid(m, mo.key);
       const pl = planLabel(m, mo.key);
       const fee = getFee(m, mo.key);
-      // 미래달이고 플랜도 없고 수동 납부도 없으면 — 표시(클릭하면 선납처리)
-      const futureDash = isFuture && !m.plan && !m.pay[mo.key];
+      // — 표시 조건: 미래달이면서 플랜없음 OR 선납 범위 이후 달
+      const afterPlan = m.plan && m.plan.type === '선납' && mo.key > m.plan.end;
+      const futureDash = (!m.plan && isFuture && !m.pay[mo.key]) || (afterPlan && !m.pay[mo.key]);
       let inner;
       if (pl === '완납_first') {
         inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">선납</span></span>`;
@@ -1153,8 +1165,7 @@ function openMM() {
   EID = null;
   document.getElementById('mm-t').textContent = '👤 회원 추가';
   document.getElementById('mm-s').textContent = '추가';
-  document.getElementById('mm-del').style.display = 'none';
-  document.getElementById('mm-wd').style.display = 'none';
+  document.getElementById('mm-danger').style.display = 'none';
   ['fn','fy','fm','frc','f-fee','f-start'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('ffleader').checked = false;
   document.getElementById('fg2').value = '남';
@@ -1171,8 +1182,7 @@ function openEM(id) {
   EID = id;
   document.getElementById('mm-t').textContent = '✏️ 회원 정보 수정';
   document.getElementById('mm-s').textContent = '저장';
-  document.getElementById('mm-del').style.display = '';
-  document.getElementById('mm-wd').style.display = '';
+  document.getElementById('mm-danger').style.display = 'flex';
   document.getElementById('fn').value = m.name;
   document.getElementById('fy').value = m.year;
   document.getElementById('fg2').value = m.g;
@@ -1276,6 +1286,7 @@ function openPM(id) {
   PMI = id; ACTIVE_ID = id; render();
   const m = D.members.find(x => x.id === id);
   if (!m) return;
+  PL_LATE = m.plan?.late || false; // 기존 late 값 로드
   document.getElementById('pl-name').textContent = m.name;
   setPT(null, m.plan?.type || '월납');
   document.getElementById('plm').classList.add('on');
@@ -1292,12 +1303,16 @@ function setPT(el, type) {
          <div class="fg"><label>납부 금액 (원)</label><input class="fi" id="pl-a" type="number" value="${m?.plan?.amount || 60000}"></div>
          <div class="info-box" style="margin-top:4px;font-size:11px">연납 처리 → 해당 연도 전월 <strong>선납</strong>으로 표기됩니다</div>`;
   } else if (PT === '선납') {
-    PL_LATE = m?.plan?.late || false;
+    // PL_LATE는 openPM에서 이미 로드됨 (탭 전환 시에만 초기화 안 함)
+    const existPlan = m?.plan?.type === '선납' ? m.plan : null;
+    const sv = existPlan?.start || y+'-01';
+    const ev = existPlan?.end || y+'-12';
+    const av = existPlan?.amount != null ? existPlan.amount : '';
     h = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-           <div class="fg"><label>시작 월</label><input class="fi" id="pl-s" type="month" value="${m?.plan?.start || y+'-01'}"></div>
-           <div class="fg"><label>종료 월</label><input class="fi" id="pl-e" type="month" value="${m?.plan?.end || y+'-12'}"></div>
+           <div class="fg"><label>시작 월</label><input class="fi" id="pl-s" type="month" value="${sv}"></div>
+           <div class="fg"><label>종료 월</label><input class="fi" id="pl-e" type="month" value="${ev}"></div>
          </div>
-         <div class="fg"><label>납부 금액 (원)</label><input class="fi" id="pl-a" type="number" value="${m?.plan?.amount || 45000}"></div>
+         <div class="fg"><label>납부 금액 (원)</label><input class="fi" id="pl-a" type="number" value="${av}" placeholder="예: 15000"></div>
          <div class="fg">
            <label>납부 구분</label>
            <div style="display:flex;gap:8px;margin-top:4px">
@@ -1333,11 +1348,16 @@ function savePlan() {
   } else if (PT === '선납') {
     const s = document.getElementById('pl-s').value;
     const e = document.getElementById('pl-e').value;
-    const a = parseInt(document.getElementById('pl-a').value) || 0;
+    const aRaw = document.getElementById('pl-a').value;
+    const a = aRaw !== '' ? (parseInt(aRaw) || 0) : (m.plan?.amount ?? 0);
     m.plan = { type: '선납', start: s, end: e, amount: a, late: PL_LATE };
+    // 기간 내 pay 자동 설정
     let d = new Date(s + '-01');
     const ed = new Date(e + '-01');
-    while (d <= ed) { m.pay[mkey(d.getFullYear(), d.getMonth() + 1)] = true; d = new Date(d.getFullYear(), d.getMonth() + 1, 1); }
+    while (d <= ed) {
+      m.pay[mkey(d.getFullYear(), d.getMonth() + 1)] = true;
+      d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    }
   } else {
     m.plan = { type: '월납' };
   }
