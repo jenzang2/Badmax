@@ -76,7 +76,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .sticky-top{position:sticky;top:52px;z-index:20;background:var(--bg);padding-bottom:4px}
 
 /* TABLE */
-.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow:auto;max-height:calc(100vh - 220px);margin-bottom:12px}
+.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow:auto;max-height:calc(100vh - 210px);margin-bottom:12px}
 table{width:100%;border-collapse:collapse}
 thead th{position:sticky;top:0;z-index:4;background:var(--sf2);box-shadow:0 1px 0 var(--bd)}
 th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);border-right:1px solid #eaecf0;text-align:center;white-space:nowrap}
@@ -661,17 +661,11 @@ function setSyncStatus(state) {
 
 // ── AUTH ────────────────────────────────────────────
 function initVisRange() {
-  // 현재 날짜 기준 ±1달 범위로 초기 표시 설정
+  // 초기: 모든 달 표시
+  R.hiddenCols = new Set();
+  R.hideOrder = [];
   const now = new Date();
   const cur = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const prev = now.getMonth() === 0
-    ? `${now.getFullYear()-1}-12`
-    : `${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}`;
-  const next = now.getMonth() === 11
-    ? `${now.getFullYear()+1}-01`
-    : `${now.getFullYear()}-${String(now.getMonth()+2).padStart(2,'0')}`;
-  // hiddenCols: 이 범위 밖의 월들만 숨김
-  R.hiddenCols = new Set(D.months.filter(m => m.key < prev || m.key > next).map(m => m.key));
   R.cm = D.months.find(m => m.key === cur)?.key || D.months[D.months.length-1]?.key || R.cm;
 }
 function startApp() {
@@ -934,42 +928,42 @@ function render() {
   const paidCount = {};
   visMons.forEach(mo => { paidCount[mo.key] = D.members.filter(m => !m.exempt && isPaid(m, mo.key)).length; });
 
-  // 화살표: 별도 칸 없이 성별/설정 th에 inline으로 표시
-  // 숨긴 달이 어디든 있으면 양쪽 화살표 표시
+  // 화살표: hiddenBefore/After 기준으로만 표시
   const anyHidden = R.hiddenCols.size > 0;
-  const hiddenList = D.months.filter(m => R.hiddenCols.has(m.key));
-  const prevArrow = anyHidden
-    ? `<span onclick="restoreOneHidden()" title="숨긴 달 복원: ${hiddenList.map(m=>m.label).join(',')}" style="cursor:pointer;color:var(--b);font-weight:700;font-size:13px;padding:2px 4px">◀</span>`
+  const ARR_STYLE = 'cursor:pointer;color:var(--b);font-weight:700;font-size:13px;padding:0 3px;user-select:none';
+  const prevArrow = hiddenBefore.length
+    ? `<span onclick="showPrevOne()" title="${hiddenBefore[hiddenBefore.length-1].label} 보기" style="${ARR_STYLE}">◀</span>`
     : '';
-  const nextArrow = anyHidden
-    ? `<span onclick="restoreOneHidden()" title="숨긴 달 복원: ${hiddenList.map(m=>m.label).join(',')}" style="cursor:pointer;color:var(--b);font-weight:700;font-size:13px;padding:2px 4px">▶</span>`
+  const nextArrow = hiddenAfter.length
+    ? `<span onclick="showNextOne()" title="${hiddenAfter[0].label} 보기" style="${ARR_STYLE}">▶</span>`
     : '';
+
+  const nowKeyH = (()=>{ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; })();
 
   document.getElementById('th').innerHTML = `
     <tr class="th-tot">
       <th style="text-align:left;color:var(--tx2);font-size:10px;width:1%;white-space:nowrap">합계</th>
       ${visMons.map((mo, idx) => {
-        const prevVisKey = idx > 0 ? visMons[idx-1].key : null;
-        const hidBetween = prevVisKey ? D.months.filter(x => R.hiddenCols.has(x.key) && x.key > prevVisKey && x.key < mo.key) : [];
-        const betweenTot = hidBetween.length
-          ? `<th style="width:20px;padding:2px;font-size:10px;color:var(--b);cursor:pointer" onclick="revealBetween('${prevVisKey}','${mo.key}')" title="${hidBetween.map(x=>x.label).join(',')}">…</th>` : '';
-        return betweenTot + `<th style="min-width:90px;width:90px">${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`;
+        const pv = idx > 0 ? visMons[idx-1].key : null;
+        const hb = pv ? D.months.filter(x => R.hiddenCols.has(x.key) && x.key > pv && x.key < mo.key) : [];
+        const bTot = hb.length ? `<th style="width:22px;padding:0;border-right:1px solid #eaecf0;background:var(--sf2)"></th>` : '';
+        return bTot + `<th style="min-width:90px;width:90px">${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`;
       }).join('')}
-      ${anyHidden && visMons.length === 0 ? `<th style="padding:2px 6px;text-align:center">${nextArrow}</th>` : ''}
       <th style="width:1%"></th>
     </tr>
     <tr>
-      <th style="width:1%;white-space:nowrap;text-align:left">회원${anyHidden ? prevArrow : ''}</th>
+      <th style="width:1%;white-space:nowrap;text-align:left;position:relative">회원${prevArrow}</th>
       ${visMons.map((m, idx) => {
-        const prevVisKey = idx > 0 ? visMons[idx-1].key : null;
-        const hidBetween = prevVisKey ? D.months.filter(mo => R.hiddenCols.has(mo.key) && mo.key > prevVisKey && mo.key < m.key) : [];
-        const betweenTh = hidBetween.length
-          ? `<th style="width:20px;padding:2px;font-size:11px;color:var(--b);cursor:pointer;text-align:center" onclick="revealBetween('${prevVisKey}','${m.key}')" title="${hidBetween.map(x=>x.label).join(',')} 보기">…</th>` : '';
-        const nowKey2 = (()=>{ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; })();
-        const curThCls = m.key === nowKey2 ? ' th-cur-month' : '';
-        return betweenTh + `<th class="clickable${curThCls}" onclick="toggleCol('${m.key}')" title="클릭: 숨기기" style="min-width:90px;width:90px">${m.label}</th>`;
+        const pv = idx > 0 ? visMons[idx-1].key : null;
+        const hb = pv ? D.months.filter(mo => R.hiddenCols.has(mo.key) && mo.key > pv && mo.key < m.key) : [];
+        const bTh = hb.length
+          ? `<th style="width:22px;padding:0;cursor:pointer;text-align:center;font-size:11px;color:var(--b);border-right:1px solid #eaecf0" onclick="revealBetweenOne('${pv}','${m.key}')" title="${hb[0].label} 보기">…</th>` : '';
+        const curCls = m.key === nowKeyH ? ' th-cur-month' : '';
+        const isLast = idx === visMons.length - 1;
+        const rightArrow = (isLast && nextArrow) ? `<span style="position:absolute;right:-11px;top:50%;transform:translateY(-50%);z-index:6">${nextArrow}</span>` : '';
+        return bTh + `<th class="clickable${curCls}" onclick="toggleCol('${m.key}')" title="클릭: 숨기기" style="position:relative;min-width:90px;width:90px">${m.label}${rightArrow}</th>`;
       }).join('')}
-      ${anyHidden ? `<th style="width:1%;white-space:nowrap;text-align:left">${nextArrow}설정</th>` : '<th style="width:1%;white-space:nowrap">설정</th>'}
+      <th style="width:1%;white-space:nowrap;padding:9px 14px">설정</th>
     </tr>`;
 
   const s = sorted();
@@ -1232,35 +1226,32 @@ function toggleCancel(id, key) {
   sv(); render();
 }
 function toggleCol(key) {
-  if (!R.hiddenCols.has(key)) {
-    R.hiddenCols.add(key);
-    if (!R.hideOrder) R.hideOrder = [];
-    R.hideOrder.push(key); // 숨긴 순서 기록
-    render();
-  }
+  if (!R.hiddenCols.has(key)) { R.hiddenCols.add(key); render(); }
 }
-function revealBetween(afterKey, beforeKey) {
-  D.months.filter(m => R.hiddenCols.has(m.key) && m.key > afterKey && m.key < beforeKey)
-    .forEach(m => { R.hiddenCols.delete(m.key); if (R.hideOrder) R.hideOrder = R.hideOrder.filter(k=>k!==m.key); });
-  render();
+function showPrevOne() {
+  // hiddenBefore(보이는 첫 달 왼쪽) 중 가장 가까운 1개 표시
+  const vis = D.months.filter(m => !R.hiddenCols.has(m.key));
+  const firstVis = vis[0]?.key;
+  const before = firstVis ? D.months.filter(m => R.hiddenCols.has(m.key) && m.key < firstVis) : [];
+  if (before.length) { R.hiddenCols.delete(before[before.length-1].key); render(); }
 }
-function restoreOneHidden() {
-  // 가장 최근에 숨긴 달 1개 복원
-  if (!R.hideOrder) R.hideOrder = [];
-  // hideOrder에서 마지막 것, 없으면 hiddenCols에서 아무거나
-  const toRestore = R.hideOrder.length
-    ? R.hideOrder[R.hideOrder.length - 1]
-    : [...R.hiddenCols][R.hiddenCols.size - 1];
-  if (toRestore) {
-    R.hiddenCols.delete(toRestore);
-    R.hideOrder = R.hideOrder.filter(k => k !== toRestore);
-  }
-  render();
+function showNextOne() {
+  // hiddenAfter(보이는 마지막 달 오른쪽) 중 가장 가까운 1개 표시
+  const vis = D.months.filter(m => !R.hiddenCols.has(m.key));
+  const lastVis = vis[vis.length-1]?.key;
+  const after = lastVis ? D.months.filter(m => R.hiddenCols.has(m.key) && m.key > lastVis) : [];
+  if (after.length) { R.hiddenCols.delete(after[0].key); render(); }
 }
-// 하위 호환
-function showPrevMonths() { restoreOneHidden(); }
-function showNextMonths() { restoreOneHidden(); }
-function showAllHidden() { restoreOneHidden(); }
+function revealBetweenOne(afterKey, beforeKey) {
+  // 두 보이는 달 사이 숨겨진 달 중 가장 가까운 1개만 표시
+  const between = D.months.filter(m => R.hiddenCols.has(m.key) && m.key > afterKey && m.key < beforeKey);
+  if (between.length) { R.hiddenCols.delete(between[0].key); render(); }
+}
+function revealBetween(afterKey, beforeKey) { revealBetweenOne(afterKey, beforeKey); }
+function showPrevMonths() { showPrevOne(); }
+function showNextMonths() { showNextOne(); }
+function showAllHidden() { R.hiddenCols.clear(); render(); }
+function restoreOneHidden() { showNextOne(); }
 
 // ── MEMBER MODAL ─────────────────────────────────────
 function openMM() {
