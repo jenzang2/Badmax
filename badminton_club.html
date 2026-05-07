@@ -77,23 +77,24 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 
 /* TABLE */
 .tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow-x:auto;margin-bottom:12px}
-table{width:100%;border-collapse:collapse;min-width:700px}
+table{width:100%;border-collapse:collapse;min-width:700px;border:1px solid #e8eaf0}
 thead th{position:sticky;z-index:4;background:var(--sf2);box-shadow:0 1px 0 var(--bd)}
-th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}
+th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);border-right:1px solid #eaecf0;text-align:center;white-space:nowrap}
+th:last-child{border-right:none}
 th.clickable{cursor:pointer;transition:background .15s}
-.arr-th{cursor:pointer;color:var(--b);font-size:15px;font-weight:700;padding:2px 8px;min-width:30px;text-align:center;white-space:nowrap}
+.arr-th{cursor:pointer;color:var(--b);font-size:15px;font-weight:700;padding:2px 8px;min-width:30px;text-align:center;white-space:nowrap;border-right:1px solid #eaecf0}
 .arr-th:hover{background:#dbeafe!important}
 th.clickable:hover{background:#e8eaf0}
 th:first-child{text-align:left}
 /* totals header row */
 .th-tot th{background:#f7f8fc;font-size:12px;font-weight:700;color:var(--g);border-bottom:2px solid var(--bd)}
 .th-tot th:first-child{color:var(--tx2);font-weight:500}
-td{padding:8px 10px;font-size:13px;border-bottom:1px solid #f0f2f7;text-align:center;vertical-align:middle}
+td{padding:6px 8px;font-size:13px;border-bottom:1px solid #f0f2f7;border-right:1px solid #eaecf0;text-align:center;vertical-align:middle;height:40px}
+td:last-child{border-right:none}
 td:first-child{text-align:left}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover:not(.divr) td{background:#f5f7ff}
-tbody tr:hover:not(.divr){outline:1px solid #c7d2fe}
-table{border:1px solid #e8eaf0;border-radius:var(--radius2)}
+tbody tr:hover:not(.divr){outline:1.5px solid #c7d2fe;outline-offset:-1px}
 .divr td{background:#f0f2f7;font-size:10px;color:var(--tx3);text-align:center;padding:4px;letter-spacing:4px;font-weight:600}
 .divr:hover td{background:#f0f2f7!important}
 
@@ -128,15 +129,12 @@ table{border:1px solid #e8eaf0;border-radius:var(--radius2)}
 .pv-ok:hover{background:var(--g3)}
 .pv-no{background:var(--r2);color:#991b1b;border:1px dashed var(--r3)}
 .pv-no:hover{background:var(--r3)}
-.pv-pl{background:var(--yw2);color:#92400e;border-radius:7px;display:inline-flex;align-items:center;gap:3px;padding:3px 8px}
-.td-plan-s{background:var(--yw2)!important;padding-right:0!important}
-.td-plan-m{background:var(--yw2)!important;padding-left:0!important;padding-right:0!important}
-.td-plan-e{background:var(--yw2)!important;padding-left:0!important}
-.td-plan-1{background:var(--yw2)!important}
-.pv-pl-cont{background:var(--yw2);color:#92400e;opacity:.7}
-.td-plan-start{border-left:3px solid #d97706!important}
-.td-plan-end{border-right:3px solid #d97706!important}
-.td-plan-mid{border-top:2px solid #fde68a;border-bottom:2px solid #fde68a}
+.pv-pl{background:var(--yw2);color:#92400e;border-radius:7px;display:inline-flex;align-items:center;gap:3px;padding:3px 8px;white-space:nowrap}
+/* 선납 pill 연속 표기 - td 배경 흰색, span이 늘어남 */
+.pill-start{display:block;background:var(--yw2);border-radius:7px 0 0 7px;color:#92400e;font-size:12px;font-weight:600;padding:4px 0 4px 8px;white-space:nowrap;margin-right:-8px}
+.pill-mid{display:block;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 0;text-align:center;width:calc(100% + 16px);margin-left:-8px;margin-right:-8px}
+.pill-end{display:block;background:var(--yw2);border-radius:0 7px 7px 0;color:#92400e;font-size:12px;font-weight:600;padding:4px 8px 4px 0;text-align:center;margin-left:-8px}
+.pill-single{display:inline-flex;align-items:center;gap:3px;background:var(--yw2);border-radius:7px;color:#92400e;font-size:12px;font-weight:600;padding:4px 8px;white-space:nowrap}
 .pv-ex{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;cursor:default}
 .plb{display:inline-block;padding:0 5px;border-radius:20px;font-size:8px;font-weight:800;background:#fde68a;color:#78350f;margin-left:2px;vertical-align:middle;letter-spacing:.5px}
 
@@ -959,7 +957,7 @@ function render() {
         const prevVisKey = idx > 0 ? visMons[idx-1].key : null;
         const hidBetween = prevVisKey ? D.months.filter(mo => R.hiddenCols.has(mo.key) && mo.key > prevVisKey && mo.key < m.key) : [];
         const btnBefore = hidBetween.length ? `<th class="arr-th" onclick="revealBetween('${prevVisKey}','${m.key}')" title="${hidBetween.map(x=>x.label).join(',')} 보기" style="font-size:11px;padding:2px 4px">↔</th>` : '';
-        return btnBefore + `<th class="clickable" onclick="toggleCol('${m.key}')" style="min-width:80px">${m.label} <span style="font-size:9px;color:#c7d2fe">숨기기</span></th>`;
+        return btnBefore + `<th class="clickable" onclick="toggleCol('${m.key}')" style="min-width:80px" title="클릭: 숨기기">${m.label}</th>`;
       }).join('')}
       ${nextCell}
       <th style="min-width:80px">설정</th>
@@ -1018,21 +1016,17 @@ function render() {
         const badge = pl === '선납_후납' ? '후납' : '선납';
         const ri = getPlanRangeInfo(m, mo.key);
         if (ri && ri.isStart && !ri.isEnd) {
-          // 시작: 금액+배지, 오른쪽 열과 연결
-          tdClass = 'td-plan-s';
-          inner = `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 0 3px 8px;background:var(--yw2);border-radius:7px 0 0 7px;font-size:12px;font-weight:600;color:#92400e;white-space:nowrap">${fee.toLocaleString()} <span class="plb">${badge}</span></span>`;
+          // 시작셀: 금액+배지, pill이 오른쪽으로 열림
+          inner = `<span class="pill-start">${fee.toLocaleString()} <span class="plb">${badge}</span></span>`;
         } else if (ri && ri.isMid) {
-          // 중간: 배지만
-          tdClass = 'td-plan-m';
-          inner = `<span style="display:inline-block;padding:3px 0;background:var(--yw2);width:100%;text-align:center;font-size:12px;font-weight:600;color:#92400e">${badge}</span>`;
+          // 중간셀: 배지만, pill이 양쪽으로 연장
+          inner = `<span class="pill-mid">${badge}</span>`;
         } else if (ri && ri.isEnd && !ri.isStart) {
-          // 끝: 배지, 왼쪽과 연결
-          tdClass = 'td-plan-e';
-          inner = `<span style="display:inline-flex;align-items:center;padding:3px 8px 3px 0;background:var(--yw2);border-radius:0 7px 7px 0;font-size:12px;font-weight:600;color:#92400e">${badge}</span>`;
+          // 끝셀: 배지, pill이 왼쪽에서 닫힘
+          inner = `<span class="pill-end">${badge}</span>`;
         } else {
-          // 단일 셀 or 범위 정보 없음
-          tdClass = 'td-plan-1';
-          inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">${badge}</span></span>`;
+          // 단일셀 (1달짜리 선납)
+          inner = `<span class="pill-single">${fee.toLocaleString()}<span class="plb">${badge}</span></span>`;
         }
       } else if (futureDash) {
         inner = `<span class="pv" style="color:var(--tx3);background:transparent;font-size:15px" title="클릭: 선납처리">—</span>`;
