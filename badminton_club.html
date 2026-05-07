@@ -124,6 +124,10 @@ tbody tr:hover:not(.divr){outline:1.5px solid #c7d2fe;outline-offset:-1px}
 
 /* PAYMENT */
 .pcell{cursor:pointer;transition:background .1s;overflow:visible;position:relative}
+.td-cur-month{background:#f0f7ff!important}
+.th-cur-month{background:#dbeafe!important;color:#1e40af!important}
+.td-cur-month{background:#f0f7ff!important}
+.th-cur-month{background:#dbeafe!important;color:#1e40af!important}
 .pv-plan-s{display:inline-flex;align-items:center;gap:4px;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 0 4px 8px;border-radius:7px 0 0 7px;margin-right:-9px;position:relative;z-index:2;white-space:nowrap}
 .pv-plan-m{display:inline-flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 0;border-radius:0;margin-left:-9px;margin-right:-9px;position:relative;z-index:2;min-width:calc(100% + 18px)}
 .pv-plan-e{display:inline-flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 8px;border-radius:0 7px 7px 0;margin-left:-9px;margin-right:0;position:relative;z-index:2;white-space:nowrap}
@@ -340,7 +344,7 @@ tr.row-active{outline:1.5px solid #4f46e5!important}
       <input type="checkbox" id="ffleader"> 이 회원을 가족 대표로 설정 (목록에서 위에 표시)
     </label>
   </div>
-  <div class="fg"><label>메모</label><input class="fi" id="fm" placeholder="특이사항, 참고사항..."></div>
+  <div class="fg"><label>메모 (특이사항)</label><textarea class="fi" id="fm" rows="5" placeholder="특이사항, 참고사항..." style="resize:vertical;font-family:inherit"></textarea></div>
   <div class="sdiv"></div>
   <div class="sttl">💰 회비 설정</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -575,6 +579,7 @@ function normMember(m) {
     pay:    (m.pay && typeof m.pay === 'object' && !Array.isArray(m.pay)) ? m.pay : {},
     amt:    (m.amt && typeof m.amt === 'object' && !Array.isArray(m.amt)) ? m.amt : {},
     plan:   m.plan || null,
+    lateKeys: (m.lateKeys && typeof m.lateKeys==='object') ? m.lateKeys : {},
     exempt: (m.role === '운영진') ? true : !!m.exempt,
     minor: m.role === '미성년',
     fgId:      m.fgId || null,
@@ -708,6 +713,7 @@ window.addEventListener('DOMContentLoaded', () => {
 function isPaid(m, key) {
   if (m.exempt) return true;
   if (isNA(m, key)) return true;
+  if (m.lateKeys && (m.lateKeys[key] || Object.values(m.lateKeys).includes(key))) return true;
   if (m.plan) {
     const p = m.plan;
     if (p.type === '완납' && key.startsWith(String(p.year))) return true;
@@ -932,9 +938,13 @@ function render() {
   const prevArrow = hiddenBefore.length
     ? `<span onclick="showPrevMonths()" title="${hiddenBefore.map(m=>m.label).join(',')} 보기" style="cursor:pointer;color:var(--b);font-weight:700;margin-left:4px;font-size:13px">◀</span>`
     : '';
-  const nextArrow = hiddenAfter.length
-    ? `<span onclick="showNextMonths()" title="${hiddenAfter.map(m=>m.label).join(',')} 보기" style="cursor:pointer;color:var(--b);font-weight:700;margin-right:4px;font-size:13px">▶</span>`
+  // 숨겨진 달이 어디든 있으면 ▶ 표시 (마지막 이후 or 중간에 숨겨진 것들)
+  const allHidden = D.months.filter(m => R.hiddenCols.has(m.key));
+  const nextArrow = allHidden.length
+    ? `<span onclick="showAllHidden()" title="숨긴 달 모두 보기 (${allHidden.map(m=>m.label).join(',')})" style="cursor:pointer;color:var(--b);font-weight:700;font-size:13px">▶</span>`
     : '';
+  // 뒤에 숨긴 달만 있으면 1달씩
+  const hasAfterOnly = hiddenAfter.length > 0 && hiddenBefore.length === 0 && countBetween === 0;
 
   document.getElementById('th').innerHTML = `
     <tr class="th-tot">
@@ -968,7 +978,9 @@ function render() {
           : '';
         const finalStyle = (isLast && nextArrow) ? thStyle.replace('position:relative','') + (thStyle.includes('position:relative') ? '' : '') + ';position:relative' : thStyle;
         const baseStyle = ((idx === 0 && prevArrow) || (isLast && nextArrow)) ? 'position:relative;min-width:90px;width:90px' : 'min-width:90px;width:90px';
-        return betweenTh + `<th class="clickable" onclick="toggleCol('${m.key}')" title="클릭: 숨기기" style="${baseStyle}">${arrowPrefix}${m.label}${nextArrowSuffix}</th>`;
+        const nowKey2 = (()=>{ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; })();
+        const curThCls = m.key === nowKey2 ? ' th-cur-month' : '';
+        return betweenTh + `<th class="clickable${curThCls}" onclick="toggleCol('${m.key}')" title="클릭: 숨기기" style="${baseStyle}">${arrowPrefix}${m.label}${nextArrowSuffix}</th>`;
       }).join('')}
       ${visMons.length === 0 && prevArrow ? `<th style="padding:2px 6px;cursor:pointer" onclick="showPrevMonths()">${prevArrow}</th>` : ''}
       ${visMons.length === 0 && nextArrow ? `<th style="padding:2px 6px;cursor:pointer" onclick="showNextMonths()">${nextArrow}</th>` : ''}
@@ -1000,9 +1012,11 @@ function render() {
     const gbSpan = `<span class="gb ${m.g === '남' ? 'gm' : 'gf'}" style="flex-shrink:0">${m.g}</span>`;
     const yrSpan = `<span style="color:var(--tx3);font-size:11px;white-space:nowrap;flex-shrink:0">${m.year}</span>`;
     if (isSub) {
-      nameHtml = `<span class="name-indent" style="flex:1;min-width:0">${m.name}<span class="rel-badge">${m._rel}</span>${isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}</span>${yrSpan}${gbSpan}`;
+      const memoMarkSub = m.memo ? '<span title="'+m.memo.replace(/"/g,"'")+'" style="color:#f59e0b;font-size:10px;margin-left:2px;cursor:help">★</span>' : '';
+      nameHtml = `<span class="name-indent" style="flex:1;min-width:0">${m.name}${memoMarkSub}<span class="rel-badge">${m._rel}</span>${isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}</span>${yrSpan}${gbSpan}`;
     } else {
-      nameHtml = `<span style="font-weight:${isAdm?600:400};color:${isMinor?'var(--tx2)':''};flex:1;min-width:0">${m.name}${isAdm ? `<span class="rb rb-adm">${m.role}</span>` : isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}${m.fgId && m._indent === 0 ? '<span class="fai" style="font-size:10px">👨‍👩</span>' : ''}</span>${yrSpan}${gbSpan}`;
+      const memoMark = m.memo ? '<span title="'+m.memo.replace(/"/g,"'")+'" style="color:#f59e0b;font-size:10px;margin-left:2px;cursor:help">★</span>' : '';
+      nameHtml = `<span style="font-weight:${isAdm?600:400};color:${isMinor?'var(--tx2)':''};flex:1;min-width:0">${m.name}${memoMark}${isAdm ? `<span class="rb rb-adm">${m.role}</span>` : isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}${m.fgId && m._indent === 0 ? '<span class="fai" style="font-size:10px">👨‍👩</span>' : ''}</span>${yrSpan}${gbSpan}`;
     }
 
     const cells = visMons.map((mo, idx) => {
@@ -1043,6 +1057,12 @@ function render() {
         }
       } else if (futureDash) {
         inner = `<span class="pv" style="color:var(--tx3);background:transparent;font-size:15px" title="클릭: 선납처리">—</span>`;
+      } else if (m.lateKeys && Object.values(m.lateKeys).includes(mo.key)) {
+        // 이 달이 후납 납부월 (여러 달 합산 납부)
+        inner = `<span class="pv pv-ok">${fee.toLocaleString()}<span class="plb" style="background:#ddd6fe;color:#4c1d95">후납포함</span></span>`;
+      } else if (m.lateKeys && m.lateKeys[mo.key]) {
+        // 이 달이 후납 대상월 (늦게 낸 달)
+        inner = `<span class="pv" style="background:#ede9fe;color:#4c1d95;border-radius:7px;padding:3px 8px;font-size:12px;font-weight:600">후납</span>`;
       } else if (pd) {
         inner = `<span class="pv pv-ok">${fee.toLocaleString()}</span>`;
       } else {
@@ -1062,7 +1082,9 @@ function render() {
         // 미납 클릭 → 납부처리
         clickFn = `onclick="openAmtModal(${m.id},'${mo.key}')"`;
       }
-      return betweenTd + `<td class="pcell${tdClass?' '+tdClass:''}" ${clickFn}>${inner}</td>`;
+      const isCurMonth = mo.key === nowKey;
+      const curCls = isCurMonth ? ' td-cur-month' : '';
+      return betweenTd + `<td class="pcell${tdClass?' '+tdClass:''}${curCls}" ${clickFn}>${inner}</td>`;
     }).join('');
 
     const activeClass = ACTIVE_ID === m.id ? ' row-active' : '';
@@ -1158,25 +1180,30 @@ function renderW() {
 // ── 금액/납부 모달 ─────────────────────────────────────
 let AMT_ID = null, AMT_KEY = null;
 function openAmtModal(id, key) {
-  // 완납/선납 플랜 회원은 클릭해도 변경 불가
   const m = D.members.find(x => x.id === id);
   if (!m) return;
   if (m.plan && (m.plan.type === '완납' || m.plan.type === '선납')) return;
-  // 미납 클릭 → 바로 기본 금액으로 납부 처리
+  AMT_ID = id; AMT_KEY = key;
   const defaultFee = m.memberFee || D.months.find(x=>x.key===key)?.fee || 5000;
-  m.pay[key] = true;
-  delete m.amt[key]; // 기본 금액이면 amt 불필요
-  // 가족 구성원 확인
-  if (m.fgId) {
-    const famUnpaid = D.members
-      .filter(x => x.fgId === m.fgId && x.id !== id && !isPaid(x, key))
-      .sort((a,b) => (REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9));
-    famUnpaid.forEach(fm => {
-      const relLabel = fm.fgRel ? `(${fm.fgRel})` : '';
-      if (confirm(`${fm.name}${relLabel}님도 납부 처리할까요?`)) fm.pay[key] = true;
-    });
+  document.getElementById('amt-val').value = defaultFee;
+  document.getElementById('amt-name').textContent = m.name;
+  document.getElementById('amt-month').textContent = (D.months.find(x=>x.key===key)?.label || key) + ' 납부';
+  // 이전 미납 달 있으면 후납 UI 표시
+  const unpaidBefore = D.months.filter(mo => mo.key < key && !isPaid(m, mo.key) && !isNA(m, mo.key));
+  const lateRow = document.getElementById('amt-late-row');
+  const lateSel = document.getElementById('amt-late-month');
+  const lateChk = document.getElementById('amt-is-late');
+  lateChk.checked = false;
+  lateSel.style.display = 'none';
+  if (unpaidBefore.length) {
+    lateRow.style.display = '';
+    lateSel.innerHTML = '<option value="">후납 대상 월 선택...</option>' +
+      unpaidBefore.map(mo => `<option value="${mo.key}">${mo.label}</option>`).join('');
+    lateChk.onchange = () => { lateSel.style.display = lateChk.checked ? '' : 'none'; };
+  } else {
+    lateRow.style.display = 'none';
   }
-  sv(); render();
+  document.getElementById('amtm').classList.add('on');
 }
 function toggleP(id, key) {
   openAmtModal(id, key);
@@ -1186,9 +1213,17 @@ function saveAmt() {
   if (!m) return;
   const val = parseInt(document.getElementById('amt-val').value) || 0;
   const defaultFee = m.memberFee || D.months.find(x=>x.key===AMT_KEY)?.fee || 5000;
-
   if (val !== defaultFee) m.amt[AMT_KEY] = val; else delete m.amt[AMT_KEY];
   m.pay[AMT_KEY] = true;
+
+  // 후납 처리: 선택한 이전 달에 '후납' 마킹
+  const isLate = document.getElementById('amt-is-late')?.checked;
+  const lateMon = document.getElementById('amt-late-month')?.value;
+  if (isLate && lateMon) {
+    if (!m.lateKeys) m.lateKeys = {};
+    m.lateKeys[lateMon] = AMT_KEY; // lateMon이 AMT_KEY에 후납됨
+    m.pay[lateMon] = true; // 이전 달도 납부처리
+  }
 
   // 가족 구성원 확인
   if (m.fgId) {
@@ -1232,11 +1267,23 @@ function showPrevMonths() {
   render();
 }
 function showNextMonths() {
-  // 현재 보이는 마지막 월 바로 다음 1달만 펼치기
   const visMons = D.months.filter(m => !R.hiddenCols.has(m.key));
   const lastVis = visMons[visMons.length-1]?.key;
   const hidden = D.months.filter(m => R.hiddenCols.has(m.key) && (!lastVis || m.key > lastVis));
-  if (hidden.length) R.hiddenCols.delete(hidden[0].key); // 바로 다음 1달만
+  if (hidden.length) R.hiddenCols.delete(hidden[0].key);
+  render();
+}
+function showAllHidden() {
+  // 숨겨진 달이 뒤에 있으면 1달씩, 앞/중간이면 전부 보기
+  const visMons = D.months.filter(m => !R.hiddenCols.has(m.key));
+  const lastVis = visMons[visMons.length-1]?.key;
+  const hidAfter = D.months.filter(m => R.hiddenCols.has(m.key) && (!lastVis || m.key > lastVis));
+  const hidOther = D.months.filter(m => R.hiddenCols.has(m.key) && lastVis && m.key <= lastVis);
+  if (hidAfter.length) {
+    R.hiddenCols.delete(hidAfter[0].key); // 뒤쪽은 1달씩
+  } else if (hidOther.length) {
+    hidOther.forEach(m => R.hiddenCols.delete(m.key)); // 앞/중간은 전부
+  }
   render();
 }
 
@@ -1275,7 +1322,7 @@ function openEM(id) {
     document.getElementById('frc').value = m.role;
     document.getElementById('frcw').style.display = '';
   }
-  document.getElementById('fm').value = m.memo || '';
+  document.getElementById('fm').value = m.memo || ''; document.getElementById('fm').scrollTop = 0;
   document.getElementById('f-fee').value = m.memberFee || '';
   document.getElementById('f-start').value = m.startMonth || '';
   const spId = m.fgId ? D.members.find(x => x.fgId === m.fgId && x.id !== id)?.id : null;
