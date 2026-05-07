@@ -74,16 +74,22 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 
 /* STICKY TOP */
 .sticky-top{position:sticky;top:52px;z-index:20;background:var(--bg);padding-bottom:4px}
+/* thead top은 JS에서 --thead-top 변수로 설정 */
 
 /* TABLE */
 .tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow-x:auto;margin-bottom:12px}
+#main-table{width:100%;border-collapse:collapse;min-width:700px}
+.col-mon{width:90px}
+#main-table{width:100%;border-collapse:collapse;min-width:700px}
+#main-table col.col-mon{width:90px}
 table{width:100%;border-collapse:collapse;min-width:700px;border:1px solid #e8eaf0}
-thead th{position:sticky;z-index:4;background:var(--sf2);box-shadow:0 1px 0 var(--bd)}
+thead th{position:sticky;top:var(--thead-top,0px);z-index:4;background:var(--sf2);box-shadow:0 1px 0 var(--bd)}
 th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);border-right:1px solid #eaecf0;text-align:center;white-space:nowrap}
 th:last-child{border-right:none}
 th.clickable{cursor:pointer;transition:background .15s}
-.arr-th{cursor:pointer;color:var(--b);font-size:15px;font-weight:700;padding:2px 8px;min-width:30px;text-align:center;white-space:nowrap;border-right:1px solid #eaecf0}
-.arr-th:hover{background:#dbeafe!important}
+.arr-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:6;background:white;border:1.5px solid #c7d2fe;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:var(--b);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.arr-btn:hover{background:#eef2ff}
+.arr-th-wrap{position:relative;width:0;padding:0;border:none;overflow:visible}
 th.clickable:hover{background:#e8eaf0}
 th:first-child{text-align:left}
 /* totals header row */
@@ -131,9 +137,10 @@ tbody tr:hover:not(.divr){outline:1.5px solid #c7d2fe;outline-offset:-1px}
 .pv-no:hover{background:var(--r3)}
 .pv-pl{background:var(--yw2);color:#92400e;border-radius:7px;display:inline-flex;align-items:center;gap:3px;padding:3px 8px;white-space:nowrap}
 /* 선납 pill 연속 표기 - td 배경 흰색, span이 늘어남 */
-.pill-start{display:block;background:var(--yw2);border-radius:7px 0 0 7px;color:#92400e;font-size:12px;font-weight:600;padding:4px 0 4px 8px;white-space:nowrap;margin-right:-8px}
-.pill-mid{display:block;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 0;text-align:center;width:calc(100% + 16px);margin-left:-8px;margin-right:-8px}
-.pill-end{display:block;background:var(--yw2);border-radius:0 7px 7px 0;color:#92400e;font-size:12px;font-weight:600;padding:4px 8px 4px 0;text-align:center;margin-left:-8px}
+.pill-wrap{display:flex;align-items:center;height:28px;position:relative}
+.pill-start{background:var(--yw2);border-radius:7px 0 0 7px;color:#92400e;font-size:12px;font-weight:600;padding:4px 0 4px 8px;white-space:nowrap;height:28px;display:flex;align-items:center;position:absolute;left:0;right:-8px}
+.pill-mid{background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;height:28px;display:flex;align-items:center;justify-content:center;position:absolute;left:-8px;right:-8px}
+.pill-end{background:var(--yw2);border-radius:0 7px 7px 0;color:#92400e;font-size:12px;font-weight:600;padding:4px 8px 4px 0;height:28px;display:flex;align-items:center;position:absolute;left:-8px;right:0}
 .pill-single{display:inline-flex;align-items:center;gap:3px;background:var(--yw2);border-radius:7px;color:#92400e;font-size:12px;font-weight:600;padding:4px 8px;white-space:nowrap}
 .pv-ex{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;cursor:default}
 .plb{display:inline-block;padding:0 5px;border-radius:20px;font-size:8px;font-weight:800;background:#fde68a;color:#78350f;margin-left:2px;vertical-align:middle;letter-spacing:.5px}
@@ -278,13 +285,8 @@ tr.row-active{outline:1.5px solid #4f46e5!important}
           </div>
           <button class="abtn" onclick="openMM()">+ 회원 추가</button>
         </div>
-        <div style="overflow-x:auto;margin:0 0 0 0;border-radius:var(--radius2) var(--radius2) 0 0;border:1px solid #e8eaf0;border-bottom:none;background:var(--sf2)">
-          <table style="width:100%;border-collapse:collapse;min-width:700px" id="fixed-thead-table">
-            <thead id="th"></thead>
-          </table>
-        </div>
       </div>
-      <div class="tw" id="tw" style="border-radius:0 0 var(--radius2) var(--radius2);border-top:none;margin-top:0"><table style="width:100%;border-collapse:collapse;min-width:700px"><tbody id="tb"></tbody></table></div>
+      <div class="tw" id="tw"><table id="main-table"><thead id="th"></thead><tbody id="tb"></tbody></table></div>
       <div id="ubox" class="ubox"></div>
     </div>
 
@@ -882,6 +884,11 @@ function setView(v) {
 }
 
 function render() {
+  // sticky-top 높이 기반으로 thead sticky top 설정
+  requestAnimationFrame(() => {
+    const st = document.querySelector('.sticky-top');
+    if (st) document.documentElement.style.setProperty('--thead-top', (52 + st.offsetHeight) + 'px');
+  });
   const cm = D.months.find(x => x.key === R.cm) || D.months[D.months.length - 1];
   if (!cm) return;
   const tot = D.members.length;
@@ -926,41 +933,46 @@ function render() {
   const paidCount = {};
   visMons.forEach(mo => { paidCount[mo.key] = D.members.filter(m => !m.exempt && isPaid(m, mo.key)).length; });
 
-  // 화살표: 성별↔첫번째월 사이, 마지막월↔설정 사이
-  const prevCell  = hiddenBefore.length ? `<th class="arr-th" onclick="showPrevMonths()" title="${hiddenBefore.map(m=>m.label).join(',')}" >◀</th>` : `<th style="width:4px;padding:0;min-width:0"></th>`;
-  const nextCell  = hiddenAfter.length  ? `<th class="arr-th" onclick="showNextMonths()" title="${hiddenAfter.map(m=>m.label).join(',')}">▶</th>`  : `<th style="width:4px;padding:0;min-width:0"></th>`;
-  // 합계행에도 동일 자리 빈 칸
-  const prevBlank = `<th style="width:4px;padding:0;min-width:0"></th>`;
-  const nextBlank = `<th style="width:4px;padding:0;min-width:0"></th>`;
+  // col 그룹으로 월 너비 고정
+  const colGroup = `<colgroup>
+    <col style="min-width:130px">
+    <col style="width:60px">
+    <col style="width:52px">
+    ${visMons.map(() => '<col style="width:90px">').join('')}
+    <col style="width:80px">
+  </colgroup>`;
 
-  document.getElementById('th').innerHTML = `
+  // 화살표: position:absolute로 칸 사이에 겹치게
+  const prevArrowBtn = hiddenBefore.length
+    ? `<th class="arr-th-wrap"><div class="arr-btn" onclick="showPrevMonths()" title="${hiddenBefore.map(m=>m.label).join(',')} 보기" style="left:4px">◀</div></th>`
+    : '';
+  const nextArrowBtn = hiddenAfter.length
+    ? `<th class="arr-th-wrap"><div class="arr-btn" onclick="showNextMonths()" title="${hiddenAfter.map(m=>m.label).join(',')} 보기" style="right:4px">▶</div></th>`
+    : '';
+
+  document.getElementById('th').innerHTML = colGroup + `
     <tr class="th-tot">
-      <th style="text-align:left;color:var(--tx2);font-size:10px;min-width:130px">합계</th>
+      <th style="text-align:left;color:var(--tx2);font-size:10px">합계</th>
       <th></th><th></th>
-      ${prevBlank}
       ${visMons.map((mo, idx) => {
         const prevVisKey = idx > 0 ? visMons[idx-1].key : null;
         const hidBetween = prevVisKey ? D.months.filter(x => R.hiddenCols.has(x.key) && x.key > prevVisKey && x.key < mo.key) : [];
-        const blankBefore = hidBetween.length ? `<th style="width:28px;padding:0"></th>` : '';
-        return blankBefore + `<th style="min-width:80px">${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`;
+        const betweenBtn = hidBetween.length ? `<th class="arr-th-wrap" style="position:relative"><div class="arr-btn" onclick="revealBetween('${prevVisKey}','${mo.key}')" title="${hidBetween.map(x=>x.label).join(',')} 보기">↔</div></th>` : '';
+        return betweenBtn + `<th>${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`;
       }).join('')}
-      ${nextBlank}
-      <th style="min-width:80px"></th>
+      <th></th>
     </tr>
     <tr>
-      <th style="min-width:130px;text-align:left">이름</th>
+      <th style="text-align:left">이름</th>
       <th>출생</th>
-      <th>성별</th>
-      ${prevCell}
+      <th style="position:relative">${prevArrowBtn}성별</th>
       ${visMons.map((m, idx) => {
-        // 이 달 앞에 숨겨진 달이 있으면 해제 버튼 삽입
         const prevVisKey = idx > 0 ? visMons[idx-1].key : null;
         const hidBetween = prevVisKey ? D.months.filter(mo => R.hiddenCols.has(mo.key) && mo.key > prevVisKey && mo.key < m.key) : [];
-        const btnBefore = hidBetween.length ? `<th class="arr-th" onclick="revealBetween('${prevVisKey}','${m.key}')" title="${hidBetween.map(x=>x.label).join(',')} 보기" style="font-size:11px;padding:2px 4px">↔</th>` : '';
-        return btnBefore + `<th class="clickable" onclick="toggleCol('${m.key}')" style="min-width:80px" title="클릭: 숨기기">${m.label}</th>`;
+        const betweenBtn = hidBetween.length ? `<th class="arr-th-wrap" style="position:relative"><div class="arr-btn" onclick="revealBetween('${prevVisKey}','${m.key}')" title="${hidBetween.map(x=>x.label).join(',')} 보기">↔</div></th>` : '';
+        return betweenBtn + `<th class="clickable" onclick="toggleCol('${m.key}')" title="클릭: 숨기기">${m.label}</th>`;
       }).join('')}
-      ${nextCell}
-      <th style="min-width:80px">설정</th>
+      <th style="position:relative">${nextArrowBtn}설정</th>
     </tr>`;
 
   const s = sorted();
@@ -991,7 +1003,11 @@ function render() {
       nameHtml = `<span style="font-weight:${isAdm?600:400};color:${isMinor?'var(--tx2)':''}">${m.name}</span>${isAdm ? `<span class="rb rb-adm">${m.role}</span>` : isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}${m.fgId && m._indent === 0 ? `<span class="fai" title="가족회원" style="font-size:10px">👨‍👩</span>` : ''}`;
     }
 
-    const cells = visMons.map(mo => {
+    const cells = visMons.map((mo, idx) => {
+      // 이 달 앞에 숨겨진 달이 있으면 빈 td 삽입 (헤더의 arr-th-wrap에 대응)
+      const prevMoKey = idx > 0 ? visMons[idx-1].key : null;
+      const hasBetween = prevMoKey && D.months.some(x => R.hiddenCols.has(x.key) && x.key > prevMoKey && x.key < mo.key);
+      const betweenTd = hasBetween ? '<td style="width:0;padding:0;border:none"></td>' : '';
       if (isExempt) return `<td><span style="color:var(--tx3);font-size:15px">—</span></td>`;
       if (isNA(m, mo.key)) return `<td><span style="color:var(--tx3);font-size:13px">—</span></td>`;
       const nowKey = (()=>{ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; })();
@@ -1017,13 +1033,13 @@ function render() {
         const ri = getPlanRangeInfo(m, mo.key);
         if (ri && ri.isStart && !ri.isEnd) {
           // 시작셀: 금액+배지, pill이 오른쪽으로 열림
-          inner = `<span class="pill-start">${fee.toLocaleString()} <span class="plb">${badge}</span></span>`;
+          inner = `<div class="pill-wrap"><span class="pill-start">${fee.toLocaleString()} <span class="plb">${badge}</span></span></div>`;
         } else if (ri && ri.isMid) {
           // 중간셀: 배지만, pill이 양쪽으로 연장
-          inner = `<span class="pill-mid">${badge}</span>`;
+          inner = `<div class="pill-wrap"><span class="pill-mid">${badge}</span></div>`;
         } else if (ri && ri.isEnd && !ri.isStart) {
           // 끝셀: 배지, pill이 왼쪽에서 닫힘
-          inner = `<span class="pill-end">${badge}</span>`;
+          inner = `<div class="pill-wrap"><span class="pill-end">${badge}</span></div>`;
         } else {
           // 단일셀 (1달짜리 선납)
           inner = `<span class="pill-single">${fee.toLocaleString()}<span class="plb">${badge}</span></span>`;
@@ -1049,7 +1065,7 @@ function render() {
         // 미납 클릭 → 납부처리
         clickFn = `onclick="openAmtModal(${m.id},'${mo.key}')"`;
       }
-      return `<td class="pcell${tdClass?' '+tdClass:''}" ${clickFn}>${inner}</td>`;
+      return betweenTd + `<td class="pcell${tdClass?' '+tdClass:''}" ${clickFn}>${inner}</td>`;
     }).join('');
 
     const activeClass = ACTIVE_ID === m.id ? ' row-active' : '';
