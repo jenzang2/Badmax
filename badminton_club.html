@@ -76,8 +76,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .sticky-top{position:sticky;top:52px;z-index:20;background:var(--bg);padding-bottom:4px}
 
 /* TABLE */
-.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow:auto;max-height:calc(100vh - 240px);margin-bottom:12px}
-table{width:100%;border-collapse:collapse;min-width:700px}
+.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow-x:auto;margin-bottom:12px}
+table{width:100%;border-collapse:collapse}
 thead th{position:sticky;top:0;z-index:4;background:var(--sf2);box-shadow:0 1px 0 var(--bd)}
 th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);border-right:1px solid #eaecf0;text-align:center;white-space:nowrap}
 th:last-child{border-right:none}
@@ -124,9 +124,9 @@ tbody tr:hover:not(.divr){outline:1.5px solid #c7d2fe;outline-offset:-1px}
 
 /* PAYMENT */
 .pcell{cursor:pointer;transition:background .1s;overflow:visible;position:relative}
-.pv-plan-s{display:inline-flex;align-items:center;gap:4px;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 0 4px 8px;border-radius:7px 0 0 7px;margin-right:-9px;position:relative;z-index:1;white-space:nowrap}
-.pv-plan-m{display:inline-flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 0;border-radius:0;margin-left:-9px;margin-right:-9px;position:relative;z-index:1;min-width:calc(100% + 18px)}
-.pv-plan-e{display:inline-flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 8px 4px 0;border-radius:0 7px 7px 0;margin-left:-9px;position:relative;z-index:1;white-space:nowrap}
+.pv-plan-s{display:inline-flex;align-items:center;gap:4px;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 0 4px 8px;border-radius:7px 0 0 7px;margin-right:-9px;position:relative;z-index:2;white-space:nowrap}
+.pv-plan-m{display:inline-flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 0;border-radius:0;margin-left:-9px;margin-right:-9px;position:relative;z-index:2;min-width:calc(100% + 18px)}
+.pv-plan-e{display:inline-flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 8px;border-radius:0 7px 7px 0;margin-left:-9px;margin-right:0;position:relative;z-index:2;white-space:nowrap}
 .pv{display:inline-block;padding:3px 8px;border-radius:7px;font-size:12px;font-weight:600;min-width:54px;text-align:center;transition:all .15s}
 .pv-ok{background:var(--g2);color:#166534}
 .pv-ok:hover{background:var(--g3)}
@@ -763,6 +763,13 @@ function getPlanRangeInfo(m, key) {
 function getFee(m, key) {
   if (m.exempt) return 0;
   if (m.amt && m.amt[key] != null) return m.amt[key];
+  // 선납 시작월이면 해당 구간의 납부금액 반환
+  if (m.plan && m.plan.type === '선납') {
+    const ranges = m.plan.ranges || [{start:m.plan.start, end:m.plan.end, amount:m.plan.amount}];
+    for (const r of ranges) {
+      if (key === r.start && r.amount > 0) return r.amount;
+    }
+  }
   return m.memberFee || (D.months.find(x => x.key === key)?.fee || 5000);
 }
 function isNA(m, key) {
