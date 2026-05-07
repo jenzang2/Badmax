@@ -76,9 +76,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .sticky-top{position:sticky;top:52px;z-index:20;background:var(--bg);padding-bottom:4px}
 
 /* TABLE */
-.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 310px);margin-bottom:12px}
+.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow-x:auto;margin-bottom:12px}
 table{width:100%;border-collapse:collapse;min-width:520px}
 thead{position:sticky;top:0;z-index:5}
+.tw{overflow-x:auto;overflow-y:visible}
 th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}
 th.clickable{cursor:pointer;transition:background .15s}
 th.clickable:hover{background:#e8eaf0}
@@ -316,6 +317,11 @@ select.fi{cursor:pointer}
       <option value="형제/자매">형제/자매</option>
     </select>
   </div>
+  <div class="fg" id="ffleader-row" style="display:none">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0">
+      <input type="checkbox" id="ffleader"> 이 회원을 가족 대표로 설정 (목록에서 위에 표시)
+    </label>
+  </div>
   <div class="fg"><label>메모</label><input class="fi" id="fm" placeholder="특이사항, 참고사항..."></div>
   <div class="sdiv"></div>
   <div class="sttl">💰 회비 설정</div>
@@ -374,6 +380,30 @@ select.fi{cursor:pointer}
   <div class="mbtns">
     <button class="mbtn mcan" onclick="closeOv('wdm')">취소</button>
     <button class="mbtn mdng" style="flex:1" onclick="doWithdraw()">탈퇴 처리</button>
+  </div>
+</div>
+</div>
+
+<!-- 금액 입력/수정 모달 -->
+<div class="ov" id="amtm">
+<div class="modal">
+  <div class="mttl">💰 납부 처리 — <span id="amt-name" style="color:#4f46e5"></span></div>
+  <div style="font-size:12px;color:var(--tx2);margin-bottom:12px"><span id="amt-month"></span> 납부</div>
+  <div class="fg">
+    <label>입금 금액 (원)</label>
+    <input class="fi" id="amt-val" type="number" placeholder="5000">
+  </div>
+  <div class="fg" id="amt-backpay-row" style="display:none">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+      <input type="checkbox" id="amt-is-backpay" checked> 이전 달 후납 처리 포함
+    </label>
+    <select class="fi" id="amt-bp-month" style="margin-top:6px">
+      <option value="">후납 적용 월 선택...</option>
+    </select>
+  </div>
+  <div class="mbtns">
+    <button class="mbtn mcan" onclick="closeOv('amtm')">취소</button>
+    <button class="mbtn mpri" onclick="saveAmt()">납부 완료</button>
   </div>
 </div>
 </div>
@@ -461,7 +491,7 @@ const INIT = {
     {id:17,name:'김지현',year:1977,g:'남',role:'일반',fgId:f4,fgRel:'배우자',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
     {id:18,name:'김진',year:1978,g:'여',role:'일반',fgId:f2,fgRel:'배우자',pay:{[M3]:true,[M4]:true,[M5]:true},amt:{},plan:null,memo:''},
     {id:19,name:'김진곤',year:1977,g:'남',role:'일반',fgId:null,fgRel:'',pay:{},amt:{},plan:{type:'완납',year:2026,amount:60000},memo:'26년 완납'},
-    {id:20,name:'김진아',year:1986,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
+    {id:20,name:'김진아',year:1986,g:'여',role:'일반',fgId:'fg_yn',fgRel:'배우자',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
     {id:21,name:'노엘라',year:1986,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true,[M5]:true},amt:{},plan:null,memo:''},
     {id:22,name:'문성준',year:1995,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true},amt:{},plan:null,memo:''},
     {id:23,name:'박동주',year:1981,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true},amt:{[M4]:45000},plan:{type:'선납',start:'2026-04',end:'2026-12',amount:45000},memo:'4~12월 완납'},
@@ -471,14 +501,15 @@ const INIT = {
     {id:27,name:'박은선',year:2000,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
     {id:28,name:'박정현',year:1980,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
     {id:29,name:'배신영',year:1980,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M5]:true},amt:{[M3]:10000,[M5]:10000},plan:{type:'선납',start:'2026-03',end:'2026-08',amount:0},memo:'8월까지 선납'},
-    {id:30,name:'배학희',year:1978,g:'남',role:'일반',fgId:f5,fgRel:'배우자',pay:{[M3]:true,[M4]:true},amt:{[M3]:10000,[M4]:10000},plan:null,memo:'연우 배우자'},
+    {id:30,name:'배학희',year:1978,g:'남',role:'일반',fgId:f5,fgRel:'부모',pay:{[M3]:true,[M4]:true},amt:{[M3]:10000,[M4]:10000},plan:null,memo:''},
+    {id:71,name:'배연우',year:2010,g:'남',role:'미성년',fgId:f5,fgRel:'자녀',pay:{},amt:{},plan:null,memo:'배학희 자녀',exempt:true},
     {id:31,name:'백민경',year:1979,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
     {id:32,name:'서인서',year:1983,g:'남',role:'일반',fgId:null,fgRel:'',pay:{},amt:{},plan:{type:'완납',year:2026,amount:60000},memo:'26년 완납'},
     {id:33,name:'서재정',year:1978,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
     {id:34,name:'신유진',year:1987,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
     {id:35,name:'안경남',year:1974,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{[M4]:10000},plan:null,memo:''},
     {id:36,name:'양지현',year:1991,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
-    {id:37,name:'염한울',year:1983,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
+    {id:37,name:'염한울',year:1983,g:'남',role:'일반',fgId:'fg_yn',fgRel:'배우자',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:'',fgLeader:true},
     {id:38,name:'오상기',year:1984,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
     {id:39,name:'오인찬',year:1987,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
     {id:40,name:'오지원',year:2001,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
@@ -534,11 +565,13 @@ function normMember(m) {
     ...m,
     pay:    (m.pay && typeof m.pay === 'object' && !Array.isArray(m.pay)) ? m.pay : {},
     amt:    (m.amt && typeof m.amt === 'object' && !Array.isArray(m.amt)) ? m.amt : {},
+    backpay:(m.backpay && typeof m.backpay === 'object' && !Array.isArray(m.backpay)) ? m.backpay : {},
     plan:   m.plan || null,
     exempt: (m.role === '운영진') ? true : !!m.exempt,
     minor: m.role === '미성년',
     fgId:      m.fgId || null,
     fgRel:     m.fgRel || '',
+    fgLeader:  !!m.fgLeader,
     memberFee: m.memberFee || null,
     startMonth: m.startMonth || null
   };
@@ -651,11 +684,12 @@ window.addEventListener('DOMContentLoaded', () => {
 // ── HELPERS ──────────────────────────────────────────
 function isPaid(m, key) {
   if (m.exempt) return true;
-  if (isNA(m, key)) return true; // 가입 전 월은 미납으로 안 잡음
+  if (isNA(m, key)) return true;
   if (m.plan) {
     const p = m.plan;
     if (p.type === '완납' && key.startsWith(String(p.year))) return true;
     if (p.type === '선납' && key >= p.start && key <= p.end) return true;
+    if (p.type === '후납' && m.backpay && m.backpay[key]) return true;
   }
   return !!m.pay[key];
 }
@@ -664,22 +698,26 @@ function planLabel(m, key) {
   if (!m.plan) return null;
   const p = m.plan;
   if (p.type === '완납' && key.startsWith(String(p.year))) {
-    // 55000원 완납: 최초 납부 월에는 금액 표시, 이후 월은 '선납' 표시
     if (p.amount === 55000) {
-      // 납부 기록이 있는 가장 첫 번째 월 찾기
-      const yearMonths = D.months
-        .filter(mo => mo.key.startsWith(String(p.year)))
-        .map(mo => mo.key)
-        .sort();
-      // amt에 55000이 기록된 월 찾기
       const paidMonth = Object.keys(m.amt || {}).find(k => m.amt[k] === 55000 && k.startsWith(String(p.year)));
+      const yearMonths = D.months.filter(mo => mo.key.startsWith(String(p.year))).map(mo=>mo.key).sort();
       const firstMonth = paidMonth || yearMonths[0];
-      if (key === firstMonth) return '완납'; // 해당 월: 55000 금액 표시
-      return '선납_완납'; // 이후 월: 선납 배지
+      if (key === firstMonth) return '완납_first'; // 최초 월: 금액+완납배지
+      return '완납_rest'; // 이후 월: 완납 배지만(노란색)
     }
-    return '완납';
+    // 일반 완납: amt에 기록된 월이 있으면 그 달만 금액+완납, 이후는 완납만
+    const paidMonth = Object.keys(m.amt || {}).find(k => k.startsWith(String(p.year)));
+    if (paidMonth) {
+      if (key === paidMonth) return '완납_first';
+      return '완납_rest';
+    }
+    return '완납_rest'; // amt 없으면 전부 완납 배지만
   }
   if (p.type === '선납' && key >= p.start && key <= p.end) return '선납';
+  if (p.type === '후납') {
+    if (m.backpay && m.backpay[key]) return '후납_ok';
+    return null;
+  }
   return null;
 }
 function getFee(m, key) {
@@ -706,14 +744,18 @@ function sorted() {
   if (R.q) ms = ms.filter(m => m.name.includes(R.q));
   if (R.fu) ms = ms.filter(m => !m.exempt && !isPaid(m, R.cm));
 
-  if (R.mode === 'alpha') {
-    return ms.map(m => ({...m, _indent:0, _rel:''})).sort((a,b) => a.name.localeCompare(b.name,'ko'));
-  }
-
   const adm = ms.filter(m => ROLES[m.role] !== undefined)
     .sort((a,b) => (ROLES[a.role]-ROLES[b.role]) || a.name.localeCompare(b.name,'ko'))
     .map(m => ({...m, _indent:0, _rel:''}));
   const reg = ms.filter(m => ROLES[m.role] === undefined);
+
+  if (R.mode === 'alpha') {
+    const regAlpha = reg.map(m => ({...m, _indent:0, _rel:''})).sort((a,b) => a.name.localeCompare(b.name,'ko'));
+    const out = [...adm];
+    if (adm.length && regAlpha.length) out.push({_type:'div', label:'— 일반 회원 —'});
+    out.push(...regAlpha);
+    return out;
+  }
 
   if (R.mode === 'fam') {
     return sortedFamilyMode(adm, reg);
@@ -733,9 +775,7 @@ function sortedFamilyMode(adm, reg) {
   const grps = {};
   withFam.forEach(m => { (grps[m.fgId] = grps[m.fgId] || []).push(m); });
   const famGroups = Object.values(grps).map(grp => {
-    const s2 = [...grp].sort((a,b)=>a.id-b.id);
-    const head = s2[0];
-    const subs = s2.slice(1).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9));
+    const { head, subs } = pickHead(grp);
     return { key: head.name, head:{...head,_indent:0,_rel:'',_famHead:true}, subs:subs.map(s=>({...s,_indent:1,_rel:s.fgRel||''})) };
   }).sort((a,b)=>a.key.localeCompare(b.key,'ko'));
   const out = [...adm];
@@ -756,15 +796,22 @@ function sortedFamilyMode(adm, reg) {
 }
 
 const REL_ORDER = {'배우자':0,'자녀':1,'부모':2,'형제/자매':3};
+function pickHead(grp) {
+  // fgLeader 플래그 있는 멤버를 대표로, 없으면 id 오름차순
+  const leader = grp.find(m => m.fgLeader);
+  if (leader) {
+    return { head: leader, subs: grp.filter(m => m.id !== leader.id).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9)) };
+  }
+  const s2 = [...grp].sort((a,b)=>a.id-b.id);
+  return { head: s2[0], subs: s2.slice(1).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9)) };
+}
 function groupFam(ms) {
   const solo = ms.filter(m => !m.fgId).map(m => ({...m, _indent:0, _rel:''}));
   const withFam = ms.filter(m => m.fgId);
   const grps = {};
   withFam.forEach(m => { (grps[m.fgId] = grps[m.fgId] || []).push(m); });
   const famGroups = Object.values(grps).map(grp => {
-    const s2 = [...grp].sort((a,b)=>a.id-b.id);
-    const head = s2[0];
-    const subs = s2.slice(1).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9));
+    const { head, subs } = pickHead(grp);
     return { key: head.name, head:{...head,_indent:0,_rel:''}, subs:subs.map(s=>({...s,_indent:1,_rel:s.fgRel||''})) };
   });
   const combined = [
@@ -790,6 +837,14 @@ function setView(v) {
 }
 
 function render() {
+  // sticky thead top 동적 계산은 렌더 완료 후 실행
+  requestAnimationFrame(() => {
+    const stickyTop = document.querySelector('.sticky-top');
+    if (stickyTop) {
+      const thTop = 52 + stickyTop.offsetHeight;
+      document.querySelectorAll('#th tr th').forEach(el => { el.style.top = thTop + 'px'; });
+    }
+  });
   const cm = D.months.find(x => x.key === R.cm) || D.months[D.months.length - 1];
   if (!cm) return;
   const tot = D.members.length;
@@ -811,7 +866,7 @@ function render() {
     <div class="sc"><div class="sl">${cm.label} 수납액</div><div class="sv yw" style="font-size:14px">${pamt.toLocaleString()}원</div></div>`;
 
   document.getElementById('mtabs').innerHTML =
-    D.months.map(m => `<button class="mtab ${m.key === R.cm ? 'on' : ''}" onclick="R.cm='${m.key}';render()">${m.label}</button>`).join('') +
+    D.months.map(m => `<button class="mtab ${m.key === R.cm ? 'on' : ''}" onclick="R.cm='${m.key}';R_ubox='${m.key}';render()">${m.label}</button>`).join('') +
     `<button class="mtab-add" onclick="openMoM()">+ 월 추가</button>`;
 
   document.getElementById('ubtn').classList.toggle('on', R.fu);
@@ -878,17 +933,28 @@ function render() {
       const pl = planLabel(m, mo.key);
       const fee = getFee(m, mo.key);
       let inner;
-      if (pl === '선납_완납') {
-        // 55000 완납자의 이후 월: '선납' 배지, pv-ok 초록색
-        inner = `<span class="pv pv-ok">5,000<span class="plb">선납</span></span>`;
-      } else if (pl) {
-        inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">${pl}</span></span>`;
+      if (pl === '완납_first') {
+        inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">완납</span></span>`;
+      } else if (pl === '완납_rest') {
+        inner = `<span class="pv pv-pl"><span class="plb">완납</span></span>`;
+      } else if (pl === '선납') {
+        inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">선납</span></span>`;
+      } else if (pl === '후납_ok') {
+        inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb" style="background:#ddd6fe;color:#4c1d95">후납</span></span>`;
       } else if (pd) {
-        inner = `<span class="pv pv-ok">${fee.toLocaleString()}</span>`;
+        inner = `<span class="pv pv-ok" title="클릭하여 취소">${fee.toLocaleString()}</span>`;
       } else {
-        inner = `<span class="pv pv-no">미납</span>`;
+        inner = `<span class="pv pv-no" title="클릭하여 납부처리">미납</span>`;
       }
-      const clickFn = (pl === '완납' || pl === '선납_완납' || pl === '선납') ? '' : `onclick="toggleP(${m.id},'${mo.key}')"`;
+      const locked = pl === '완납_first' || pl === '완납_rest' || pl === '선납';
+      let clickFn;
+      if (locked) {
+        clickFn = '';
+      } else if (pd) {
+        clickFn = `onclick="if(confirm('납부 취소하시겠습니까?'))toggleCancel(${m.id},'${mo.key}')"`;
+      } else {
+        clickFn = `onclick="openAmtModal(${m.id},'${mo.key}')"`;
+      }
       return `<td class="pcell" ${clickFn}>${inner}</td>`;
     }).join('');
 
@@ -901,6 +967,7 @@ function render() {
       <td>
         <button class="tbtn" onclick="openEM(${m.id})" style="padding:4px 8px;font-size:11px" title="정보 수정">✏️</button>
         ${isExempt ? '' : `<button class="tbtn" onclick="openPM(${m.id})" style="padding:4px 8px;font-size:11px;color:var(--yw)" title="납부설정">💰</button>`}
+        ${isExempt ? '' : `<button class="tbtn" onclick="openBackpayModal(${m.id},'${R.cm}')" style="padding:4px 8px;font-size:11px;color:#7c3aed" title="후납처리">↩</button>`}
       </td>
     </tr>`;
   }).join('');
@@ -909,23 +976,19 @@ function render() {
   renderUnpaid(cm);
 }
 
-let R_ubox = null; // 미납박스 전용 선택 월
+let R_ubox = null;
 function renderUnpaid(cm) {
   if (!cm) cm = D.months.find(x => x.key === R.cm);
   if (!cm) return;
-  if (!R_ubox) R_ubox = cm.key;
+  R_ubox = R.cm; // 항상 상단 선택 월과 동기화
   const ucm = D.months.find(x => x.key === R_ubox) || cm;
   const unpaid = D.members.filter(m => !m.exempt && m.role !== '미성년' && !isPaid(m, ucm.key));
   const kakaoText = unpaid.length
-    ? `[${ucm.label} 회비 미납 안내]\n\n${unpaid.map(m => m.name).join(', ')} 님,\n이번 달 회비 납부 부탁드립니다 🏸\n\n회비: 5,000원\n계좌: (계좌번호 입력)`
+    ? `[${ucm.label} 회비 미납 안내]\n\n${unpaid.map(m => m.name).join(', ')} 님,\n이번 달 회비 납부 부탁드립니다 🏸`
     : `✅ ${ucm.label} 전원 납부 완료!`;
-  const monthTabs = D.months.map(mo => `
-    <button onclick="R_ubox='${mo.key}';renderUnpaid()" style="padding:3px 10px;border-radius:6px;border:1px solid ${mo.key===R_ubox?'#1e1b4b':'var(--bd)'};background:${mo.key===R_ubox?'#1e1b4b':'white'};color:${mo.key===R_ubox?'white':'var(--tx2)'};font-size:11px;font-family:inherit;cursor:pointer;font-weight:${mo.key===R_ubox?700:400}">${mo.label}</button>
-  `).join('');
   document.getElementById('ubox').innerHTML = `
     <div class="ut">
-      <span>⚠️ 미납자 확인</span>
-      <div style="display:flex;gap:4px;flex-wrap:wrap">${monthTabs}</div>
+      <span>⚠️ ${ucm.label} 미납자 확인</span>
     </div>
     <div style="margin-bottom:8px;font-size:12px;color:var(--tx2)">${ucm.label} 미납 <strong style="color:var(--r)">${unpaid.length}명</strong></div>
     <div class="chips">
@@ -988,32 +1051,109 @@ function renderW() {
   `).join('');
 }
 
-// ── TOGGLE PAY ───────────────────────────────────────
-function toggleCol(key) {
-  R.hiddenCols.has(key) ? R.hiddenCols.delete(key) : R.hiddenCols.add(key);
-  render();
+// ── 금액/납부 모달 ─────────────────────────────────────
+let AMT_ID = null, AMT_KEY = null;
+function openAmtModal(id, key) {
+  // 완납/선납 플랜 회원은 클릭해도 변경 불가
+  const m = D.members.find(x => x.id === id);
+  if (!m) return;
+  if (m.plan && (m.plan.type === '완납' || m.plan.type === '선납')) return;
+  toggleP(id, key);
 }
 function toggleP(id, key) {
   const m = D.members.find(x => x.id === id);
   if (!m) return;
   const was = !!m.pay[key];
-  m.pay[key] = !was;
 
-  // 납부 처리 시 가족 구성원 순차 확인
+  if (was) {
+    // 납부 취소 시: amt도 기본값(memberFee or 월회비)으로 리셋
+    m.pay[key] = false;
+    delete m.amt[key];
+  } else {
+    // 납부 처리 시: 금액 입력 모달
+    AMT_ID = id; AMT_KEY = key;
+    const defaultFee = m.memberFee || D.months.find(x=>x.key===key)?.fee || 5000;
+    document.getElementById('amt-val').value = defaultFee;
+    document.getElementById('amt-name').textContent = m.name;
+    document.getElementById('amt-month').textContent = D.months.find(x=>x.key===key)?.label || key;
+    document.getElementById('amt-backpay-row').style.display = 'none';
+    document.getElementById('amtm').classList.add('on');
+    return;
+  }
+
+  // 가족 구성원 확인
   if (!was && m.fgId) {
-    // 배우자 먼저, 그 다음 자녀 순으로 미납자만
     const famUnpaid = D.members
       .filter(x => x.fgId === m.fgId && x.id !== id && !isPaid(x, key))
-      .sort((a, b) => (REL_ORDER[a.fgRel] ?? 9) - (REL_ORDER[b.fgRel] ?? 9));
-
+      .sort((a,b) => (REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9));
     famUnpaid.forEach(fm => {
       const relLabel = fm.fgRel ? `(${fm.fgRel})` : '';
-      if (confirm(`${fm.name}${relLabel}님도 납부 처리할까요?`)) {
-        fm.pay[key] = true;
-      }
+      if (confirm(`${fm.name}${relLabel}님도 납부 처리할까요?`)) fm.pay[key] = true;
     });
   }
   sv(); render();
+}
+function saveAmt() {
+  const m = D.members.find(x => x.id === AMT_ID);
+  if (!m) return;
+  const val = parseInt(document.getElementById('amt-val').value) || 0;
+  const defaultFee = m.memberFee || D.months.find(x=>x.key===AMT_KEY)?.fee || 5000;
+
+  // 후납 처리
+  const isBackpay = document.getElementById('amt-is-backpay')?.checked;
+  if (isBackpay) {
+    const bpKey = document.getElementById('amt-bp-month').value;
+    if (!bpKey) { alert('후납 적용 월을 선택해주세요.'); return; }
+    if (!m.backpay) m.backpay = {};
+    m.backpay[bpKey] = true;
+    if (val !== defaultFee) m.amt[AMT_KEY] = val; else delete m.amt[AMT_KEY];
+    m.pay[AMT_KEY] = true;
+  } else {
+    if (val !== defaultFee) m.amt[AMT_KEY] = val; else delete m.amt[AMT_KEY];
+    m.pay[AMT_KEY] = true;
+  }
+
+  // 가족 구성원 확인
+  if (m.fgId) {
+    const famUnpaid = D.members
+      .filter(x => x.fgId === m.fgId && x.id !== AMT_ID && !isPaid(x, AMT_KEY))
+      .sort((a,b) => (REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9));
+    famUnpaid.forEach(fm => {
+      const relLabel = fm.fgRel ? `(${fm.fgRel})` : '';
+      if (confirm(`${fm.name}${relLabel}님도 납부 처리할까요?`)) fm.pay[AMT_KEY] = true;
+    });
+  }
+  closeOv('amtm'); sv(); render();
+}
+function openBackpayModal(id, key) {
+  // 후납 설정: 이번 달 납부에 이전 달 미납을 포함
+  AMT_ID = id; AMT_KEY = key;
+  const m = D.members.find(x => x.id === id);
+  if (!m) return;
+  const defaultFee = m.memberFee || D.months.find(x=>x.key===key)?.fee || 5000;
+  document.getElementById('amt-val').value = defaultFee;
+  document.getElementById('amt-name').textContent = m.name;
+  document.getElementById('amt-month').textContent = D.months.find(x=>x.key===key)?.label || key;
+  // 후납 대상 월 목록 (이전 미납 월들)
+  const unpaidMonths = D.months.filter(mo => mo.key < key && !isPaid(m, mo.key));
+  const bpSel = document.getElementById('amt-bp-month');
+  bpSel.innerHTML = '<option value="">선택...</option>' + unpaidMonths.map(mo=>`<option value="${mo.key}">${mo.label}</option>`).join('');
+  document.getElementById('amt-backpay-row').style.display = '';
+  document.getElementById('amt-is-backpay').checked = true;
+  document.getElementById('amtm').classList.add('on');
+}
+
+// ── TOGGLE PAY (기존 호환용) ─────────────────────────────────────────
+function toggleCancel(id, key) {
+  const m = D.members.find(x => x.id === id);
+  if (!m) return;
+  m.pay[key] = false;
+  delete m.amt[key];
+  sv(); render();
+}
+function toggleCol(key) {
+  R.hiddenCols.has(key) ? R.hiddenCols.delete(key) : R.hiddenCols.add(key);
+  render();
 }
 
 // ── MEMBER MODAL ─────────────────────────────────────
@@ -1024,6 +1164,7 @@ function openMM() {
   document.getElementById('mm-del').style.display = 'none';
   document.getElementById('mm-wd').style.display = 'none';
   ['fn','fy','fm','frc','f-fee','f-start'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ffleader').checked = false;
   document.getElementById('fg2').value = '남';
   document.getElementById('fr').value = '일반';
   document.getElementById('frcw').style.display = 'none';
@@ -1055,10 +1196,10 @@ function openEM(id) {
   document.getElementById('f-fee').value = m.memberFee || '';
   document.getElementById('f-start').value = m.startMonth || '';
   const spId = m.fgId ? D.members.find(x => x.fgId === m.fgId && x.id !== id)?.id : null;
-  fillFamDrop(id, spId, m.fgRel || '배우자');
+  fillFamDrop(id, spId, m.fgRel || '배우자', m.fgLeader);
   document.getElementById('mm').classList.add('on');
 }
-function fillFamDrop(exId, curId, curRel) {
+function fillFamDrop(exId, curId, curRel, curLeader) {
   const sel = document.getElementById('ffm');
   sel.innerHTML = '<option value="">연결 안 함</option>';
   D.members.filter(m => m.id !== exId).forEach(m => {
@@ -1067,9 +1208,16 @@ function fillFamDrop(exId, curId, curRel) {
     sel.appendChild(o);
   });
   sel.value = curId || '';
-  document.getElementById('ffrw').style.display = curId ? '' : 'none';
+  const showFam = !!curId;
+  document.getElementById('ffrw').style.display = showFam ? '' : 'none';
+  document.getElementById('ffleader-row').style.display = showFam ? '' : 'none';
   if (curRel) document.getElementById('ffr').value = curRel;
-  sel.onchange = () => { document.getElementById('ffrw').style.display = sel.value ? '' : 'none'; };
+  if (curLeader !== undefined) document.getElementById('ffleader').checked = !!curLeader;
+  sel.onchange = () => {
+    const v = !!sel.value;
+    document.getElementById('ffrw').style.display = v ? '' : 'none';
+    document.getElementById('ffleader-row').style.display = v ? '' : 'none';
+  };
 }
 function saveMember() {
   const name = document.getElementById('fn').value.trim();
@@ -1088,20 +1236,37 @@ function saveMember() {
   }
   const memberFee = parseInt(document.getElementById('f-fee').value) || null;
   const startMonth = document.getElementById('f-start').value || null;
+  const isLeader = document.getElementById('ffleader').checked;
   if (EID) {
     const m = D.members.find(x => x.id === EID);
     Object.assign(m, { name, year, g, role, memo, memberFee, startMonth });
     if (famSel) {
       const t = D.members.find(x => x.id == famSel);
-      if (t) { const fg = t.fgId || ('fg_' + Date.now()); t.fgId = fg; if (!t.fgRel) t.fgRel = famRel; m.fgId = fg; m.fgRel = famRel; }
-    } else { m.fgId = null; m.fgRel = ''; }
+      if (t) {
+        const fg = t.fgId || ('fg_' + Date.now());
+        t.fgId = fg; if (!t.fgRel) t.fgRel = famRel;
+        m.fgId = fg; m.fgRel = famRel;
+        // 대표 설정: 같은 가족 내 fgLeader 초기화 후 이 멤버에 설정
+        if (isLeader) {
+          D.members.filter(x => x.fgId === fg).forEach(x => { x.fgLeader = false; });
+          m.fgLeader = true;
+        } else {
+          m.fgLeader = false;
+        }
+      }
+    } else { m.fgId = null; m.fgRel = ''; m.fgLeader = false; }
   } else {
     const id = Date.now(); let fgId = null, fgRel = '';
     if (famSel) {
       const t = D.members.find(x => x.id == famSel);
-      if (t) { fgId = t.fgId || ('fg_' + Date.now()); t.fgId = fgId; if (!t.fgRel) t.fgRel = famRel; fgRel = famRel; }
+      if (t) {
+        fgId = t.fgId || ('fg_' + Date.now()); t.fgId = fgId; if (!t.fgRel) t.fgRel = famRel; fgRel = famRel;
+        if (isLeader) {
+          D.members.filter(x => x.fgId === fgId).forEach(x => { x.fgLeader = false; });
+        }
+      }
     }
-    D.members.push({ id, name, year, g, role, fgId, fgRel, pay: {}, amt: {}, plan: null, memo, memberFee, startMonth });
+    D.members.push({ id, name, year, g, role, fgId, fgRel, fgLeader: isLeader, pay: {}, amt: {}, plan: null, memo, memberFee, startMonth });
   }
   sv(); closeOv('mm'); render();
 }
@@ -1277,7 +1442,7 @@ function showFbSetupBanner() {
 // ── UTILS ─────────────────────────────────────────────
 function closeOv(id) { document.getElementById(id).classList.remove('on'); }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') ['mm','plm','wdm','mom'].forEach(closeOv);
+  if (e.key === 'Escape') ['mm','plm','wdm','mom','amtm'].forEach(closeOv);
 });
 document.querySelectorAll('.ov').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('on'); });
