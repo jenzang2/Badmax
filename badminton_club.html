@@ -931,9 +931,7 @@ function render() {
 
   document.getElementById('th').innerHTML = `
     <tr class="th-tot">
-      <th style="text-align:left;color:var(--tx2);font-size:10px;min-width:130px">합계</th>
-      <th style="min-width:60px"></th>
-      <th style="min-width:52px"></th>
+      <th style="text-align:left;color:var(--tx2);font-size:10px;width:1%;white-space:nowrap">합계</th>
       ${visMons.map((mo, idx) => {
         const prevVisKey = idx > 0 ? visMons[idx-1].key : null;
         const hidBetween = prevVisKey ? D.months.filter(x => R.hiddenCols.has(x.key) && x.key > prevVisKey && x.key < mo.key) : [];
@@ -941,33 +939,38 @@ function render() {
           ? `<th style="width:20px;padding:2px;font-size:10px;color:var(--b);cursor:pointer" onclick="revealBetween('${prevVisKey}','${mo.key}')" title="${hidBetween.map(x=>x.label).join(',')}">…</th>` : '';
         return betweenTot + `<th style="min-width:90px;width:90px">${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`;
       }).join('')}
+      ${visMons.length === 0 && nextArrow ? `<th style="padding:2px 6px">${nextArrow}</th>` : ''}
       <th style="min-width:80px"></th>
     </tr>
     <tr>
-      <th style="min-width:130px;text-align:left">이름</th>
-      <th style="min-width:60px">출생</th>
-      <th style="min-width:52px;white-space:nowrap">${prevArrow}성별</th>
+      <th style="width:1%;white-space:nowrap;text-align:left">회원</th>
       ${visMons.map((m, idx) => {
         const prevVisKey = idx > 0 ? visMons[idx-1].key : null;
         const hidBetween = prevVisKey ? D.months.filter(mo => R.hiddenCols.has(mo.key) && mo.key > prevVisKey && mo.key < m.key) : [];
         const betweenTh = hidBetween.length
           ? `<th style="width:20px;padding:2px;font-size:11px;color:var(--b);cursor:pointer;text-align:center" onclick="revealBetween('${prevVisKey}','${m.key}')" title="${hidBetween.map(x=>x.label).join(',')} 보기">…</th>` : '';
-        return betweenTh + `<th class="clickable" onclick="toggleCol('${m.key}')" title="클릭: 숨기기" style="min-width:90px;width:90px">${m.label}</th>`;
+        // 첫 번째 월이고 prevArrow 있으면 th를 position:relative로 해서 ◀ 표시
+        const arrowPrefix = (idx === 0 && prevArrow)
+          ? `<span style="position:absolute;left:-12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--b);font-size:12px;font-weight:700;z-index:5" onclick="showPrevMonths()" title="${hiddenBefore.map(m=>m.label).join(',')} 보기">◀</span>`
+          : '';
+        const thStyle = (idx === 0 && prevArrow) ? 'position:relative;min-width:90px;width:90px' : 'min-width:90px;width:90px';
+        return betweenTh + `<th class="clickable" onclick="toggleCol('${m.key}')" title="클릭: 숨기기" style="${thStyle}">${arrowPrefix}${m.label}</th>`;
       }).join('')}
+      ${visMons.length === 0 && prevArrow ? `<th style="padding:2px 6px;cursor:pointer" onclick="showPrevMonths()">${prevArrow}</th>` : ''}
       <th style="min-width:80px;white-space:nowrap">${nextArrow}설정</th>
     </tr>`;
 
   const s = sorted();
   if (!s.length || (s.length === 1 && s[0]._div)) {
-    document.getElementById('tb').innerHTML = `<tr><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}" class="empty">회원 없음</td></tr>`;
+    document.getElementById('tb').innerHTML = `<tr><td colspan="${1+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}" class="empty">회원 없음</td></tr>`;
     renderUnpaid(cm);
     return;
   }
 
   const rows = s.map(item => {
-    if (item._type === 'div') return `<tr class="divr"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}">${item.label||'— 일반 회원 —'}</td></tr>`;
-    if (item._type === 'section') return `<tr class="sectr" style="background:${item.bg||'#f8f9fb'}"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}" style="color:${item.tc||'var(--tx2)'}">${item.label}</td></tr>`;
-    if (item._type === 'famgap') return `<tr class="famgapr"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}"></td></tr>`;
+    if (item._type === 'div') return `<tr class="divr"><td colspan="${1+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}">${item.label||'— 일반 회원 —'}</td></tr>`;
+    if (item._type === 'section') return `<tr class="sectr" style="background:${item.bg||'#f8f9fb'}"><td colspan="${1+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}" style="color:${item.tc||'var(--tx2)'}">${item.label}</td></tr>`;
+    if (item._type === 'famgap') return `<tr class="famgapr"><td colspan="${1+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}"></td></tr>`;
     const m = item;
     const isAdm = ROLES[m.role] !== undefined;
     const isExempt = !!m.exempt;
@@ -979,10 +982,12 @@ function render() {
     // Name cell
     const isMinor = m.role === '미성년';
     let nameHtml;
+    const gbSpan = `<span class="gb ${m.g === '남' ? 'gm' : 'gf'}" style="flex-shrink:0">${m.g}</span>`;
+    const yrSpan = `<span style="color:var(--tx3);font-size:11px;white-space:nowrap;flex-shrink:0">${m.year}</span>`;
     if (isSub) {
-      nameHtml = `<span class="name-indent">${m.name}<span class="rel-badge">${m._rel}</span>${isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}</span>`;
+      nameHtml = `<span class="name-indent" style="flex:1;min-width:0">${m.name}<span class="rel-badge">${m._rel}</span>${isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}</span>${yrSpan}${gbSpan}`;
     } else {
-      nameHtml = `<span style="font-weight:${isAdm?600:400};color:${isMinor?'var(--tx2)':''}">${m.name}</span>${isAdm ? `<span class="rb rb-adm">${m.role}</span>` : isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}${m.fgId && m._indent === 0 ? `<span class="fai" title="가족회원" style="font-size:10px">👨‍👩</span>` : ''}`;
+      nameHtml = `<span style="font-weight:${isAdm?600:400};color:${isMinor?'var(--tx2)':''};flex:1;min-width:0">${m.name}${isAdm ? `<span class="rb rb-adm">${m.role}</span>` : isMinor ? '<span class="rb rb-minor">미성년</span>' : ''}${m.fgId && m._indent === 0 ? '<span class="fai" style="font-size:10px">👨‍👩</span>' : ''}</span>${yrSpan}${gbSpan}`;
     }
 
     const cells = visMons.map((mo, idx) => {
@@ -1047,9 +1052,7 @@ function render() {
 
     const activeClass = ACTIVE_ID === m.id ? ' row-active' : '';
     return `<tr class="${rowCls}${activeClass}" ondblclick="openEM(${m.id})" style="cursor:pointer">
-      <td>${nameHtml}</td>
-      <td style="color:var(--tx2)">${m.year}</td>
-      <td><span class="gb ${m.g === '남' ? 'gm' : 'gf'}">${m.g}</span></td>
+      <td style="white-space:nowrap"><div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap">${nameHtml}</div></td>
       ${cells}
       <td>
         <button class="tbtn" onclick="openEM(${m.id})" style="padding:4px 8px;font-size:11px" title="정보 수정">✏️</button>
