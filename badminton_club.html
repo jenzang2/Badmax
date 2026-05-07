@@ -45,7 +45,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .logbtn{padding:5px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.15);font-size:11px;color:rgba(255,255,255,.5);cursor:pointer;background:transparent;font-family:inherit}
 .logbtn:hover{border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.8)}
 
-.main{padding:14px 14px 80px;max-width:900px;margin:0 auto}
+.main{padding:14px 14px 80px;max-width:1400px;margin:0 auto}
 
 /* STATS */
 .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
@@ -77,9 +77,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 
 /* TABLE */
 .tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow-x:auto;margin-bottom:12px}
-table{width:100%;border-collapse:collapse;min-width:520px}
-thead{position:sticky;top:0;z-index:5}
-.tw{overflow-x:auto;overflow-y:visible}
+table{width:100%;border-collapse:collapse;min-width:700px}
+thead th{position:sticky;z-index:4;background:var(--sf2)}
 th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}
 th.clickable{cursor:pointer;transition:background .15s}
 th.clickable:hover{background:#e8eaf0}
@@ -547,7 +546,7 @@ const INIT = {
 };
 
 let D = {};
-let R = { view: 'm', cm: M3, q: '', fu: false, mode: 'def', hiddenCols: new Set() };
+let R = { view: 'm', cm: M3, q: '', fu: false, mode: 'def', hiddenCols: new Set(), visRange: null };
 let EID = null, PMI = null, WMI = null, PT = '월납';
 
 // ── STORAGE ─────────────────────────────────────────
@@ -608,6 +607,7 @@ function ld() {
         D = normData(val);
         if (!D.months.find(m => m.key === R.cm))
           R.cm = D.months[D.months.length - 1]?.key || R.cm;
+        if (!R._rangeInited) { initVisRange(); R._rangeInited = true; }
       } else {
         D = JSON.parse(JSON.stringify(INIT));
         db.ref('club').set(JSON.parse(JSON.stringify(INIT)));
@@ -646,6 +646,20 @@ function setSyncStatus(state) {
 }
 
 // ── AUTH ────────────────────────────────────────────
+function initVisRange() {
+  // 현재 날짜 기준 ±1달 범위로 초기 표시 설정
+  const now = new Date();
+  const cur = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const prev = now.getMonth() === 0
+    ? `${now.getFullYear()-1}-12`
+    : `${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}`;
+  const next = now.getMonth() === 11
+    ? `${now.getFullYear()+1}-01`
+    : `${now.getFullYear()}-${String(now.getMonth()+2).padStart(2,'0')}`;
+  // hiddenCols: 이 범위 밖의 월들만 숨김
+  R.hiddenCols = new Set(D.months.filter(m => m.key < prev || m.key > next).map(m => m.key));
+  R.cm = D.months.find(m => m.key === cur)?.key || D.months[D.months.length-1]?.key || R.cm;
+}
 function startApp() {
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -654,7 +668,7 @@ function startApp() {
     ld();
   } else {
     ld();
-    R.cm = D.months[D.months.length - 1]?.key || M3;
+    initVisRange();
     render();
     showFbSetupBanner();
   }
@@ -837,14 +851,6 @@ function setView(v) {
 }
 
 function render() {
-  // sticky thead top 동적 계산은 렌더 완료 후 실행
-  requestAnimationFrame(() => {
-    const stickyTop = document.querySelector('.sticky-top');
-    if (stickyTop) {
-      const thTop = 52 + stickyTop.offsetHeight;
-      document.querySelectorAll('#th tr th').forEach(el => { el.style.top = thTop + 'px'; });
-    }
-  });
   const cm = D.months.find(x => x.key === R.cm) || D.months[D.months.length - 1];
   if (!cm) return;
   const tot = D.members.length;
@@ -872,6 +878,8 @@ function render() {
   document.getElementById('ubtn').classList.toggle('on', R.fu);
 
   const visMons = D.months.filter(m => !R.hiddenCols.has(m.key));
+  const hiddenBefore = D.months.filter(m => R.hiddenCols.has(m.key) && visMons.length && m.key < visMons[0].key);
+  const hiddenAfter  = D.months.filter(m => R.hiddenCols.has(m.key) && visMons.length && m.key > visMons[visMons.length-1].key);
   const hidCount = D.months.length - visMons.length;
 
   // Pre-calculate totals for header
@@ -882,33 +890,55 @@ function render() {
   const paidCount = {};
   visMons.forEach(mo => { paidCount[mo.key] = D.members.filter(m => !m.exempt && isPaid(m, mo.key)).length; });
 
+  // sticky top 계산
+  const stickyTopEl = document.querySelector('.sticky-top');
+  const thTop = stickyTopEl ? (52 + stickyTopEl.offsetHeight) : 130;
+  const t0 = thTop + 'px';
+  const t1 = (thTop + 38) + 'px';
+
+  const prevArrow = hiddenBefore.length
+    ? `<th style="cursor:pointer;color:var(--b);font-size:14px;padding:4px 4px;min-width:26px;top:${t0}" onclick="showPrevMonths()" title="${hiddenBefore.map(m=>m.label).join(',')} 보기">◀</th>`
+    : `<th style="min-width:26px;top:${t0}"></th>`;
+  const nextArrow = hiddenAfter.length
+    ? `<th style="cursor:pointer;color:var(--b);font-size:14px;padding:4px 4px;min-width:26px;top:${t0}" onclick="showNextMonths()" title="${hiddenAfter.map(m=>m.label).join(',')} 보기">▶</th>`
+    : `<th style="min-width:26px;top:${t0}"></th>`;
+  const prevArrow2 = hiddenBefore.length
+    ? `<th style="cursor:pointer;color:var(--b);font-size:14px;padding:4px 4px;min-width:26px;top:${t1}" onclick="showPrevMonths()">◀</th>`
+    : `<th style="min-width:26px;top:${t1}"></th>`;
+  const nextArrow2 = hiddenAfter.length
+    ? `<th style="cursor:pointer;color:var(--b);font-size:14px;padding:4px 4px;min-width:26px;top:${t1}" onclick="showNextMonths()">▶</th>`
+    : `<th style="min-width:26px;top:${t1}"></th>`;
+
   document.getElementById('th').innerHTML = `
     <tr class="th-tot">
-      <th style="text-align:left;color:var(--tx2);font-size:10px">합계</th>
-      <th></th><th></th>
-      ${visMons.map(mo => `<th>${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`).join('')}
-      ${hidCount ? '<th></th>' : ''}
-      <th></th>
+      <th style="text-align:left;color:var(--tx2);font-size:10px;top:${t0}">합계</th>
+      <th style="top:${t0}"></th><th style="top:${t0}"></th>
+      ${prevArrow}
+      ${visMons.map(mo => `<th style="top:${t0}">${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`).join('')}
+      ${nextArrow}
+      <th style="top:${t0}"></th>
     </tr>
     <tr>
-      <th style="min-width:130px;text-align:left">이름</th>
-      <th>출생</th><th>성별</th>
-      ${visMons.map(m => `<th class="clickable" onclick="toggleCol('${m.key}')" title="클릭하여 숨기기" style="min-width:85px">${m.label} <span style="font-size:9px;color:#c7d2fe">숨기기</span></th>`).join('')}
-      ${hidCount ? `<th class="clickable" style="color:var(--yw);font-size:10px" onclick="R.hiddenCols.clear();render()">+${hidCount}열 보기</th>` : ''}
-      <th style="min-width:70px">설정</th>
+      <th style="min-width:130px;text-align:left;top:${t1}">이름</th>
+      <th style="top:${t1}">출생</th>
+      <th style="top:${t1}">성별</th>
+      ${prevArrow2}
+      ${visMons.map(m => `<th class="clickable" onclick="toggleCol('${m.key}')" title="클릭하여 숨기기" style="min-width:85px;top:${t1}">${m.label} <span style="font-size:9px;color:#c7d2fe">숨기기</span></th>`).join('')}
+      ${nextArrow2}
+      <th style="min-width:90px;top:${t1}">설정</th>
     </tr>`;
 
   const s = sorted();
   if (!s.length || (s.length === 1 && s[0]._div)) {
-    document.getElementById('tb').innerHTML = `<tr><td colspan="${3+visMons.length+2}" class="empty">회원 없음</td></tr>`;
+    document.getElementById('tb').innerHTML = `<tr><td colspan="${visMons.length+6}" class="empty">회원 없음</td></tr>`;
     renderUnpaid(cm);
     return;
   }
 
   const rows = s.map(item => {
-    if (item._type === 'div') return `<tr class="divr"><td colspan="${3+visMons.length+(hidCount?2:1)+1}">${item.label||'— 일반 회원 —'}</td></tr>`;
-    if (item._type === 'section') return `<tr class="sectr" style="background:${item.bg||'#f8f9fb'}"><td colspan="${3+visMons.length+(hidCount?2:1)+1}" style="color:${item.tc||'var(--tx2)'}">${item.label}</td></tr>`;
-    if (item._type === 'famgap') return `<tr class="famgapr"><td colspan="${3+visMons.length+(hidCount?2:1)+1}"></td></tr>`;
+    if (item._type === 'div') return `<tr class="divr"><td colspan="${visMons.length+6}">${item.label||'— 일반 회원 —'}</td></tr>`;
+    if (item._type === 'section') return `<tr class="sectr" style="background:${item.bg||'#f8f9fb'}"><td colspan="${visMons.length+6}" style="color:${item.tc||'var(--tx2)'}">${item.label}</td></tr>`;
+    if (item._type === 'famgap') return `<tr class="famgapr"><td colspan="${visMons.length+6}"></td></tr>`;
     const m = item;
     const isAdm = ROLES[m.role] !== undefined;
     const isExempt = !!m.exempt;
@@ -929,6 +959,9 @@ function render() {
     const cells = visMons.map(mo => {
       if (isExempt) return `<td><span class="pv pv-ex">면제</span></td>`;
       if (isNA(m, mo.key)) return `<td><span style="color:var(--tx3);font-size:13px">—</span></td>`;
+      // 미래 달: 완납/선납 플랜 있으면 표시, 없으면 —
+      const nowKey = (()=>{ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; })();
+      if (mo.key > nowKey && !m.plan) return `<td><span style="color:var(--tx3);font-size:13px">—</span></td>`;
       const pd = isPaid(m, mo.key);
       const pl = planLabel(m, mo.key);
       const fee = getFee(m, mo.key);
@@ -963,7 +996,6 @@ function render() {
       <td style="color:var(--tx2)">${m.year}</td>
       <td><span class="gb ${m.g === '남' ? 'gm' : 'gf'}">${m.g}</span></td>
       ${cells}
-      ${hidCount ? '<td></td>' : ''}
       <td>
         <button class="tbtn" onclick="openEM(${m.id})" style="padding:4px 8px;font-size:11px" title="정보 수정">✏️</button>
         ${isExempt ? '' : `<button class="tbtn" onclick="openPM(${m.id})" style="padding:4px 8px;font-size:11px;color:var(--yw)" title="납부설정">💰</button>`}
@@ -1153,6 +1185,22 @@ function toggleCancel(id, key) {
 }
 function toggleCol(key) {
   R.hiddenCols.has(key) ? R.hiddenCols.delete(key) : R.hiddenCols.add(key);
+  render();
+}
+function showPrevMonths() {
+  // 현재 보이는 첫 번째 월 이전의 숨겨진 달들을 보여줌
+  const visMons = D.months.filter(m => !R.hiddenCols.has(m.key));
+  const firstVis = visMons[0]?.key;
+  const hidden = D.months.filter(m => R.hiddenCols.has(m.key) && (!firstVis || m.key < firstVis));
+  hidden.forEach(m => R.hiddenCols.delete(m.key));
+  render();
+}
+function showNextMonths() {
+  // 현재 보이는 마지막 월 이후의 숨겨진 달들을 보여줌
+  const visMons = D.months.filter(m => !R.hiddenCols.has(m.key));
+  const lastVis = visMons[visMons.length-1]?.key;
+  const hidden = D.months.filter(m => R.hiddenCols.has(m.key) && (!lastVis || m.key > lastVis));
+  hidden.forEach(m => R.hiddenCols.delete(m.key));
   render();
 }
 
