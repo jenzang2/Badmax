@@ -76,10 +76,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .sticky-top{position:sticky;top:52px;z-index:20;background:var(--bg);padding-bottom:4px}
 
 /* TABLE */
-.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow:auto;max-height:calc(100vh - 260px);margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow-x:auto;margin-bottom:12px}
 table{width:100%;border-collapse:collapse;min-width:700px}
-thead th{position:sticky;top:0;z-index:4;background:var(--sf2);box-shadow:0 1px 0 var(--bd)}
-th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);border-right:1px solid #e8eaf0;text-align:center;white-space:nowrap}
+thead th{position:sticky;z-index:4;background:var(--sf2);box-shadow:0 1px 0 var(--bd)}
+th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}
 th.clickable{cursor:pointer;transition:background .15s}
 .arr-th{cursor:pointer;color:var(--b);font-size:15px;font-weight:700;padding:2px 8px;min-width:30px;text-align:center;white-space:nowrap}
 .arr-th:hover{background:#dbeafe!important}
@@ -88,11 +88,11 @@ th:first-child{text-align:left}
 /* totals header row */
 .th-tot th{background:#f7f8fc;font-size:12px;font-weight:700;color:var(--g);border-bottom:2px solid var(--bd)}
 .th-tot th:first-child{color:var(--tx2);font-weight:500}
-td{padding:8px 10px;font-size:13px;border-bottom:1px solid #f0f2f7;border-right:1px solid #f0f2f7;text-align:center;vertical-align:middle}
-td:last-child{border-right:none}
+td{padding:8px 10px;font-size:13px;border-bottom:1px solid #f0f2f7;text-align:center;vertical-align:middle}
 td:first-child{text-align:left}
 tbody tr:last-child td{border-bottom:none}
-tbody tr:hover:not(.divr) td{background:#fafbfd}
+tbody tr:hover:not(.divr) td{background:#f5f7ff}
+tbody tr:hover:not(.divr){outline:1px solid #c7d2fe}
 table{border:1px solid #e8eaf0;border-radius:var(--radius2)}
 .divr td{background:#f0f2f7;font-size:10px;color:var(--tx3);text-align:center;padding:4px;letter-spacing:4px;font-weight:600}
 .divr:hover td{background:#f0f2f7!important}
@@ -129,6 +129,14 @@ table{border:1px solid #e8eaf0;border-radius:var(--radius2)}
 .pv-no{background:var(--r2);color:#991b1b;border:1px dashed var(--r3)}
 .pv-no:hover{background:var(--r3)}
 .pv-pl{background:var(--yw2);color:#92400e}
+.td-plan-range{background:var(--yw2)!important}
+.td-plan-start{border-left:2.5px solid #d97706!important;background:var(--yw2)!important}
+.td-plan-end{border-right:2.5px solid #d97706!important;background:var(--yw2)!important}
+.td-plan-mid{background:var(--yw3)!important}
+.pv-pl-cont{background:var(--yw2);color:#92400e;opacity:.7}
+.td-plan-start{border-left:3px solid #d97706!important}
+.td-plan-end{border-right:3px solid #d97706!important}
+.td-plan-mid{border-top:2px solid #fde68a;border-bottom:2px solid #fde68a}
 .pv-ex{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;cursor:default}
 .plb{display:inline-block;padding:0 5px;border-radius:20px;font-size:8px;font-weight:800;background:#fde68a;color:#78350f;margin-left:2px;vertical-align:middle;letter-spacing:.5px}
 
@@ -217,7 +225,7 @@ select.fi{cursor:pointer}
 .famgapr:hover td{background:var(--bg)!important}
 .row-famhead td{background:#f0fdf8}
 .row-famhead:hover td{background:#e6faf4!important}
-tr.row-active td{box-shadow:inset 0 0 0 2px #4f46e5!important;background:#eef2ff!important}
+tr.row-active{outline:1.5px solid #4f46e5!important}
 .row-active td{outline:2px solid #4f46e5!important;outline-offset:-1px}
 .row-active td:first-child{outline-left:2px solid #4f46e5!important}
 </style>
@@ -272,8 +280,13 @@ tr.row-active td{box-shadow:inset 0 0 0 2px #4f46e5!important;background:#eef2ff
           </div>
           <button class="abtn" onclick="openMM()">+ 회원 추가</button>
         </div>
+        <div style="overflow-x:auto;margin:0 0 0 0;border-radius:var(--radius2) var(--radius2) 0 0;border:1px solid #e8eaf0;border-bottom:none;background:var(--sf2)">
+          <table style="width:100%;border-collapse:collapse;min-width:700px" id="fixed-thead-table">
+            <thead id="th"></thead>
+          </table>
+        </div>
       </div>
-      <div class="tw" id="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+      <div class="tw" id="tw" style="border-radius:0 0 var(--radius2) var(--radius2);border-top:none;margin-top:0"><table style="width:100%;border-collapse:collapse;min-width:700px"><tbody id="tb"></tbody></table></div>
       <div id="ubox" class="ubox"></div>
     </div>
 
@@ -293,11 +306,13 @@ tr.row-active td{box-shadow:inset 0 0 0 2px #4f46e5!important;background:#eef2ff
 <div class="ov" id="mm">
 <div class="modal">
   <div class="mttl" id="mm-t">👤 회원 추가</div>
-  <div id="mm-danger" style="display:none;display:none;justify-content:flex-end;gap:6px;margin-bottom:12px">
-    <button class="mbtn mdng" id="mm-wd" style="flex:0;padding:7px 14px;font-size:12px" onclick="openWdFromEdit()" title="탈퇴처리">🚪 탈퇴처리</button>
-    <button class="mbtn mdng" id="mm-del" style="flex:0;padding:7px 14px;font-size:12px" onclick="deleteMember()" title="완전삭제">🗑 삭제</button>
+  <div class="fg" style="display:flex;gap:8px;align-items:flex-end">
+    <div style="flex:1"><label style="display:block;font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">이름 *</label><input class="fi" id="fn" placeholder="홍길동"></div>
+    <div id="mm-danger" style="display:none;gap:5px;flex-shrink:0">
+      <button class="mbtn mdng" id="mm-wd" style="flex:0;padding:8px 10px;font-size:11px;white-space:nowrap" onclick="openWdFromEdit()">🚪 탈퇴</button>
+      <button class="mbtn mdng" id="mm-del" style="flex:0;padding:8px 10px;font-size:11px;white-space:nowrap" onclick="deleteMember()">🗑 삭제</button>
+    </div>
   </div>
-  <div class="fg"><label>이름 *</label><input class="fi" id="fn" placeholder="홍길동"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
     <div class="fg"><label>출생연도</label><input class="fi" id="fy" type="number" placeholder="1990" min="1940" max="2015"></div>
     <div class="fg"><label>성별</label><select class="fi" id="fg2"><option value="남">남</option><option value="여">여</option></select></div>
@@ -704,7 +719,11 @@ function isPaid(m, key) {
   if (m.plan) {
     const p = m.plan;
     if (p.type === '완납' && key.startsWith(String(p.year))) return true;
-    if (p.type === '선납' && key >= p.start && key <= p.end) return true;
+    if (p.type === '선납') {
+      // 다중 구간 지원
+      const ranges = p.ranges || [{start:p.start, end:p.end}];
+      if (ranges.some(r => key >= r.start && key <= r.end)) return true;
+    }
   }
   return !!m.pay[key];
 }
@@ -728,9 +747,24 @@ function planLabel(m, key) {
     }
     return '완납_rest'; // amt 없으면 전부 완납 배지만
   }
-  if (p.type === '선납' && key >= p.start && key <= p.end) {
-    if (p.late) return '선납_후납';
-    return '선납';
+  if (p.type === '선납') {
+    const ranges = p.ranges || [{start:p.start, end:p.end, late:p.late}];
+    for (const r of ranges) {
+      if (key >= r.start && key <= r.end) {
+        return r.late ? '선납_후납' : '선납';
+      }
+    }
+  }
+  return null;
+}
+// 선납 구간 정보 반환 (셀 강조용)
+function getPlanRangeInfo(m, key) {
+  if (!m.plan || m.plan.type !== '선납') return null;
+  const ranges = m.plan.ranges || [{start:m.plan.start, end:m.plan.end}];
+  for (const r of ranges) {
+    if (key >= r.start && key <= r.end) {
+      return { isStart: key === r.start, isEnd: key === r.end, isMid: key > r.start && key < r.end };
+    }
   }
   return null;
 }
@@ -890,33 +924,29 @@ function render() {
   const paidCount = {};
   visMons.forEach(mo => { paidCount[mo.key] = D.members.filter(m => !m.exempt && isPaid(m, mo.key)).length; });
 
-  const prevBtn = hiddenBefore.length
-    ? `<th class="arr-th" onclick="showPrevMonths()" title="${hiddenBefore.map(m=>m.label).join(',')}" >◀</th>`
-    : `<th style="min-width:6px;padding:0"></th>`;
-  const nextBtn = hiddenAfter.length
-    ? `<th class="arr-th" onclick="showNextMonths()" title="${hiddenAfter.map(m=>m.label).join(',')}">▶</th>`
-    : `<th style="min-width:6px;padding:0"></th>`;
-
-  // 합계행과 헤더행의 열 수를 동일하게 맞춤
-  const hasPrev = hiddenBefore.length > 0;
-  const hasNext = hiddenAfter.length > 0;
+  // 화살표: 성별↔첫번째월 사이, 마지막월↔설정 사이
+  const prevCell  = hiddenBefore.length ? `<th class="arr-th" onclick="showPrevMonths()" title="${hiddenBefore.map(m=>m.label).join(',')}" >◀</th>` : `<th style="width:4px;padding:0;min-width:0"></th>`;
+  const nextCell  = hiddenAfter.length  ? `<th class="arr-th" onclick="showNextMonths()" title="${hiddenAfter.map(m=>m.label).join(',')}">▶</th>`  : `<th style="width:4px;padding:0;min-width:0"></th>`;
+  // 합계행에도 동일 자리 빈 칸
+  const prevBlank = `<th style="width:4px;padding:0;min-width:0"></th>`;
+  const nextBlank = `<th style="width:4px;padding:0;min-width:0"></th>`;
 
   document.getElementById('th').innerHTML = `
     <tr class="th-tot">
-      <th style="text-align:left;color:var(--tx2);font-size:10px">합계</th>
+      <th style="text-align:left;color:var(--tx2);font-size:10px;min-width:130px">합계</th>
       <th></th><th></th>
-      ${hasPrev ? '<th></th>' : ''}
-      ${visMons.map(mo => `<th>${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`).join('')}
-      ${hasNext ? '<th></th>' : ''}
-      <th></th>
+      ${prevBlank}
+      ${visMons.map(mo => `<th style="min-width:80px">${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`).join('')}
+      ${nextBlank}
+      <th style="min-width:80px"></th>
     </tr>
     <tr>
       <th style="min-width:130px;text-align:left">이름</th>
       <th>출생</th>
       <th>성별</th>
-      ${prevBtn}
+      ${prevCell}
       ${visMons.map(m => `<th class="clickable" onclick="toggleCol('${m.key}')" style="min-width:80px">${m.label} <span style="font-size:9px;color:#c7d2fe">숨기기</span></th>`).join('')}
-      ${nextBtn}
+      ${nextCell}
       <th style="min-width:80px">설정</th>
     </tr>`;
 
@@ -957,7 +987,11 @@ function render() {
       const pl = planLabel(m, mo.key);
       const fee = getFee(m, mo.key);
       // — 표시 조건: 미래달이면서 플랜없음 OR 선납 범위 이후 달
-      const afterPlan = m.plan && m.plan.type === '선납' && mo.key > m.plan.end;
+      const afterPlan = m.plan && m.plan.type === '선납' && (() => {
+        const ranges = m.plan.ranges || [{end:m.plan.end}];
+        const maxEnd = ranges.reduce((mx,r)=>r.end>mx?r.end:mx,'');
+        return mo.key > maxEnd;
+      })();
       const futureDash = (!m.plan && isFuture && !m.pay[mo.key]) || (afterPlan && !m.pay[mo.key]);
       let inner;
       if (pl === '완납_first') {
@@ -966,7 +1000,14 @@ function render() {
         inner = `<span class="pv pv-pl"><span class="plb">선납</span></span>`;
       } else if (pl === '선납' || pl === '선납_후납') {
         const badge = pl === '선납_후납' ? '후납' : '선납';
-        inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">${badge}</span></span>`;
+        const ri = getPlanRangeInfo(m, mo.key);
+        if (ri && ri.isStart) {
+          inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">${badge}</span></span>`;
+        } else if (ri && (ri.isMid || ri.isEnd)) {
+          inner = `<span class="pv pv-pl" style="opacity:.5;font-size:11px">${badge}</span>`;
+        } else {
+          inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">${badge}</span></span>`;
+        }
       } else if (futureDash) {
         inner = `<span class="pv" style="color:var(--tx3);background:transparent;font-size:15px" title="클릭: 선납처리">—</span>`;
       } else if (pd) {
@@ -1182,7 +1223,7 @@ function openEM(id) {
   EID = id;
   document.getElementById('mm-t').textContent = '✏️ 회원 정보 수정';
   document.getElementById('mm-s').textContent = '저장';
-  document.getElementById('mm-danger').style.display = 'flex';
+  document.getElementById('mm-danger').style.display = 'flex'; document.getElementById('mm-danger').style.setProperty('display','flex');
   document.getElementById('fn').value = m.name;
   document.getElementById('fy').value = m.year;
   document.getElementById('fg2').value = m.g;
@@ -1303,23 +1344,13 @@ function setPT(el, type) {
          <div class="fg"><label>납부 금액 (원)</label><input class="fi" id="pl-a" type="number" value="${m?.plan?.amount || 60000}"></div>
          <div class="info-box" style="margin-top:4px;font-size:11px">연납 처리 → 해당 연도 전월 <strong>선납</strong>으로 표기됩니다</div>`;
   } else if (PT === '선납') {
-    // PL_LATE는 openPM에서 이미 로드됨 (탭 전환 시에만 초기화 안 함)
     const existPlan = m?.plan?.type === '선납' ? m.plan : null;
-    const sv = existPlan?.start || y+'-01';
-    const ev = existPlan?.end || y+'-12';
-    const av = existPlan?.amount != null ? existPlan.amount : '';
-    h = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-           <div class="fg"><label>시작 월</label><input class="fi" id="pl-s" type="month" value="${sv}"></div>
-           <div class="fg"><label>종료 월</label><input class="fi" id="pl-e" type="month" value="${ev}"></div>
-         </div>
-         <div class="fg"><label>납부 금액 (원)</label><input class="fi" id="pl-a" type="number" value="${av}" placeholder="예: 15000"></div>
-         <div class="fg">
-           <label>납부 구분</label>
-           <div style="display:flex;gap:8px;margin-top:4px">
-             <button type="button" id="pl-late-n" onclick="setPLLate(false)" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid ${!PL_LATE?'#4f46e5':'var(--bd)'};background:${!PL_LATE?'#eef2ff':'white'};color:${!PL_LATE?'#4f46e5':'var(--tx2)'};font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">선납 (미리 납부)</button>
-             <button type="button" id="pl-late-y" onclick="setPLLate(true)" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid ${PL_LATE?'#4f46e5':'var(--bd)'};background:${PL_LATE?'#eef2ff':'white'};color:${PL_LATE?'#4f46e5':'var(--tx2)'};font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">후납 (늦게 납부)</button>
-           </div>
-         </div>`;
+    const existRanges = existPlan?.ranges || (existPlan ? [{start:existPlan.start,end:existPlan.end,amount:existPlan.amount,late:existPlan.late||false}] : []);
+    const rangesHtml = existRanges.length
+      ? existRanges.map((r,i) => renderRangeRow(r,i)).join('')
+      : renderRangeRow({start:y+'-01',end:y+'-03',amount:'',late:false},0);
+    h = `<div id="plan-ranges">${rangesHtml}</div>
+         <button type="button" onclick="addPlanRange()" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1.5px dashed var(--bd);background:white;color:var(--b);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">+ 부분납입 추가</button>`;
   } else {
     h = `<div class="info-box">매월 개별 납부로 처리됩니다.<br>기존 완납/선납 계획이 해제됩니다.</div>`;
   }
@@ -1337,6 +1368,58 @@ function setPLLate(val) {
     b.style.color = on ? '#4f46e5' : 'var(--tx2)';
   });
 }
+function renderRangeRow(r, idx) {
+  const lateN = !r.late ? '#4f46e5' : 'var(--bd)';
+  const lateY = r.late  ? '#4f46e5' : 'var(--bd)';
+  const lateBgN = !r.late ? '#eef2ff' : 'white';
+  const lateBgY = r.late  ? '#eef2ff' : 'white';
+  const lateClrN = !r.late ? '#4f46e5' : 'var(--tx2)';
+  const lateClrY = r.late  ? '#4f46e5' : 'var(--tx2)';
+  return `<div class="plan-range-row" style="background:#f8f9fb;border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:8px;position:relative">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:700;color:var(--tx2)">구간 ${idx+1}</span>
+      ${idx > 0 ? `<button type="button" onclick="removeRangeRow(this)" style="background:none;border:none;color:var(--r);cursor:pointer;font-size:13px;padding:0">✕</button>` : ''}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div><label style="font-size:10px;color:var(--tx2);display:block;margin-bottom:3px">시작 월</label><input class="fi pr-start" type="month" value="${r.start||''}"></div>
+      <div><label style="font-size:10px;color:var(--tx2);display:block;margin-bottom:3px">종료 월</label><input class="fi pr-end" type="month" value="${r.end||''}"></div>
+    </div>
+    <div style="margin-bottom:8px"><label style="font-size:10px;color:var(--tx2);display:block;margin-bottom:3px">납부 금액 (원)</label><input class="fi pr-amt" type="number" value="${r.amount||''}" placeholder="예: 15000"></div>
+    <div style="display:flex;gap:6px">
+      <button type="button" onclick="toggleRangeLate(this,false)" style="flex:1;padding:6px;border-radius:6px;border:1.5px solid ${lateN};background:${lateBgN};color:${lateClrN};font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">선납</button>
+      <button type="button" onclick="toggleRangeLate(this,true)" style="flex:1;padding:6px;border-radius:6px;border:1.5px solid ${lateY};background:${lateBgY};color:${lateClrY};font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">후납</button>
+    </div>
+    <input type="hidden" class="pr-late" value="${r.late||false}">
+  </div>`;
+}
+function addPlanRange() {
+  const container = document.getElementById('plan-ranges');
+  if (!container) return;
+  const idx = container.querySelectorAll('.plan-range-row').length;
+  const div = document.createElement('div');
+  div.innerHTML = renderRangeRow({start:'',end:'',amount:'',late:false}, idx);
+  container.appendChild(div.firstChild);
+}
+function removeRangeRow(btn) {
+  btn.closest('.plan-range-row').remove();
+  // 구간 번호 재정렬
+  document.querySelectorAll('.plan-range-row').forEach((row,i) => {
+    const label = row.querySelector('span');
+    if (label) label.textContent = '구간 ' + (i+1);
+  });
+}
+function toggleRangeLate(btn, val) {
+  const row = btn.closest('.plan-range-row');
+  const hidden = row.querySelector('.pr-late');
+  if (hidden) hidden.value = val;
+  const btns = row.querySelectorAll('button[onclick*="toggleRangeLate"]');
+  btns.forEach(b => {
+    const isThis = b === btn;
+    b.style.borderColor = isThis ? '#4f46e5' : 'var(--bd)';
+    b.style.background = isThis ? '#eef2ff' : 'white';
+    b.style.color = isThis ? '#4f46e5' : 'var(--tx2)';
+  });
+}
 function savePlan() {
   const m = D.members.find(x => x.id === PMI);
   if (!m) return;
@@ -1346,18 +1429,38 @@ function savePlan() {
     m.plan = { type: '완납', year: y, amount: a };
     for (let mo = 1; mo <= 12; mo++) m.pay[mkey(y, mo)] = true;
   } else if (PT === '선납') {
-    const s = document.getElementById('pl-s').value;
-    const e = document.getElementById('pl-e').value;
-    const aRaw = document.getElementById('pl-a').value;
-    const a = aRaw !== '' ? (parseInt(aRaw) || 0) : (m.plan?.amount ?? 0);
-    m.plan = { type: '선납', start: s, end: e, amount: a, late: PL_LATE };
-    // 기간 내 pay 자동 설정
-    let d = new Date(s + '-01');
-    const ed = new Date(e + '-01');
-    while (d <= ed) {
-      m.pay[mkey(d.getFullYear(), d.getMonth() + 1)] = true;
-      d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    // 현재 ranges 유지하면서 추가 or 전체 교체
+    const existRanges = (m.plan?.type === '선납' && m.plan.ranges) ? [...m.plan.ranges] : [];
+    // UI에서 편집 중인 구간들 수집
+    const newRanges = [];
+    const rows = document.querySelectorAll('.plan-range-row');
+    rows.forEach(row => {
+      const s2 = row.querySelector('.pr-start')?.value;
+      const e2 = row.querySelector('.pr-end')?.value;
+      const a2Raw = row.querySelector('.pr-amt')?.value;
+      const a2 = a2Raw !== '' ? (parseInt(a2Raw)||0) : 0;
+      const late2 = row.querySelector('.pr-late')?.value === 'true';
+      if (s2 && e2) newRanges.push({start:s2, end:e2, amount:a2, late:late2});
+    });
+    if (!newRanges.length) {
+      const s = document.getElementById('pl-s')?.value;
+      const e = document.getElementById('pl-e')?.value;
+      const aRaw = document.getElementById('pl-a')?.value;
+      const a = aRaw !== '' ? (parseInt(aRaw)||0) : (m.plan?.amount ?? 0);
+      if (s && e) newRanges.push({start:s, end:e, amount:a, late:PL_LATE});
     }
+    if (!newRanges.length) return;
+    // start 기준 정렬
+    newRanges.sort((a,b) => a.start.localeCompare(b.start));
+    m.plan = { type: '선납', ranges: newRanges,
+      start: newRanges[0].start, end: newRanges[newRanges.length-1].end,
+      amount: newRanges[0].amount, late: newRanges[0].late };
+    // 모든 구간 pay 설정
+    newRanges.forEach(r => {
+      let d = new Date(r.start + '-01');
+      const ed = new Date(r.end + '-01');
+      while (d <= ed) { m.pay[mkey(d.getFullYear(), d.getMonth()+1)] = true; d = new Date(d.getFullYear(), d.getMonth()+1, 1); }
+    });
   } else {
     m.plan = { type: '월납' };
   }
