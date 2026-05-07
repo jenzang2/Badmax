@@ -954,7 +954,7 @@ function render() {
       <th style="width:1%"></th>
     </tr>
     <tr>
-      <th style="width:1%;white-space:nowrap;text-align:left;position:relative">회원${prevArrow}</th>
+      <th style="width:1%;white-space:nowrap;text-align:left;position:relative">회원${prevArrow ? `<span onclick="showPrevOne()" title="${hiddenBefore[hiddenBefore.length-1].label} 보기" style="position:absolute;right:-10px;top:50%;transform:translateY(-50%);z-index:10;background:white;border:1.5px solid #c7d2fe;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;font-weight:700;color:var(--b);line-height:1">◀</span>` : ''}</th>
       ${visMons.map((m, idx) => {
         const pv = idx > 0 ? visMons[idx-1].key : null;
         const hb = pv ? D.months.filter(mo => R.hiddenCols.has(mo.key) && mo.key > pv && mo.key < m.key) : [];
@@ -963,7 +963,7 @@ function render() {
         const curCls = m.key === nowKeyH ? ' th-cur-month' : '';
         return bTh + `<th class="clickable${curCls}" onclick="toggleCol('${m.key}')" title="클릭: 숨기기" style="min-width:90px;width:90px">${m.label}</th>`;
       }).join('')}
-      <th style="width:1%;white-space:nowrap;padding:9px 14px">${nextArrow}설정</th>
+      <th style="width:1%;white-space:nowrap;padding:9px 14px;position:relative">${nextArrow ? `<span onclick="showNextOne()" title="${hiddenAfter[0].label} 보기" style="position:absolute;left:-10px;top:50%;transform:translateY(-50%);z-index:10;background:white;border:1.5px solid #c7d2fe;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;font-weight:700;color:var(--b);line-height:1">▶</span>` : ''}설정</th>
     </tr>`;
 
   const s = sorted();
@@ -1071,7 +1071,7 @@ function render() {
       <td style="white-space:nowrap"><div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap">${nameHtml}</div></td>
       ${cells}
       <td style="white-space:nowrap">
-        <button class="tbtn" onclick="openEM(${m.id})" style="padding:4px 8px;font-size:11px" title="정보 수정">✏️</button>${isExempt ? '' : `<button class="tbtn" onclick="openPM(${m.id})" style="padding:4px 8px;font-size:11px;color:var(--yw)" title="납부설정/금액수정">💰</button>`}
+        ${isExempt ? '' : `<button class="tbtn" onclick="openPM(${m.id})" style="padding:4px 8px;font-size:11px;color:var(--yw)" title="납부설정/금액수정">💰</button>`}
       </td>
     </tr>`;
   }).join('');
