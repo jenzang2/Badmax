@@ -81,6 +81,10 @@ table{width:100%;border-collapse:collapse;min-width:700px}
 thead th{position:sticky;z-index:4;background:var(--sf2)}
 th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);text-align:center;white-space:nowrap}
 th.clickable{cursor:pointer;transition:background .15s}
+.arr-th{cursor:pointer;color:var(--b);font-size:15px;padding:4px 8px;min-width:30px;text-align:center;white-space:nowrap}
+.arr-th:hover{background:#dbeafe!important}
+.arr-th{cursor:pointer;color:var(--b);font-size:15px;padding:4px 6px;min-width:28px;text-align:center}
+.arr-th:hover{background:#dbeafe}
 th.clickable:hover{background:#e8eaf0}
 th:first-child{text-align:left}
 /* totals header row */
@@ -386,20 +390,13 @@ select.fi{cursor:pointer}
 <!-- 금액 입력/수정 모달 -->
 <div class="ov" id="amtm">
 <div class="modal">
-  <div class="mttl">💰 납부 처리 — <span id="amt-name" style="color:#4f46e5"></span></div>
+  <div class="mttl">💰 금액 수정 — <span id="amt-name" style="color:#4f46e5"></span></div>
   <div style="font-size:12px;color:var(--tx2);margin-bottom:12px"><span id="amt-month"></span> 납부</div>
   <div class="fg">
     <label>입금 금액 (원)</label>
     <input class="fi" id="amt-val" type="number" placeholder="5000">
   </div>
-  <div class="fg" id="amt-backpay-row" style="display:none">
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-      <input type="checkbox" id="amt-is-backpay" checked> 이전 달 후납 처리 포함
-    </label>
-    <select class="fi" id="amt-bp-month" style="margin-top:6px">
-      <option value="">후납 적용 월 선택...</option>
-    </select>
-  </div>
+
   <div class="mbtns">
     <button class="mbtn mcan" onclick="closeOv('amtm')">취소</button>
     <button class="mbtn mpri" onclick="saveAmt()">납부 완료</button>
@@ -564,7 +561,6 @@ function normMember(m) {
     ...m,
     pay:    (m.pay && typeof m.pay === 'object' && !Array.isArray(m.pay)) ? m.pay : {},
     amt:    (m.amt && typeof m.amt === 'object' && !Array.isArray(m.amt)) ? m.amt : {},
-    backpay:(m.backpay && typeof m.backpay === 'object' && !Array.isArray(m.backpay)) ? m.backpay : {},
     plan:   m.plan || null,
     exempt: (m.role === '운영진') ? true : !!m.exempt,
     minor: m.role === '미성년',
@@ -703,7 +699,6 @@ function isPaid(m, key) {
     const p = m.plan;
     if (p.type === '완납' && key.startsWith(String(p.year))) return true;
     if (p.type === '선납' && key >= p.start && key <= p.end) return true;
-    if (p.type === '후납' && m.backpay && m.backpay[key]) return true;
   }
   return !!m.pay[key];
 }
@@ -728,10 +723,6 @@ function planLabel(m, key) {
     return '완납_rest'; // amt 없으면 전부 완납 배지만
   }
   if (p.type === '선납' && key >= p.start && key <= p.end) return '선납';
-  if (p.type === '후납') {
-    if (m.backpay && m.backpay[key]) return '후납_ok';
-    return null;
-  }
   return null;
 }
 function getFee(m, key) {
@@ -890,55 +881,43 @@ function render() {
   const paidCount = {};
   visMons.forEach(mo => { paidCount[mo.key] = D.members.filter(m => !m.exempt && isPaid(m, mo.key)).length; });
 
-  // sticky top 계산
-  const stickyTopEl = document.querySelector('.sticky-top');
-  const thTop = stickyTopEl ? (52 + stickyTopEl.offsetHeight) : 130;
-  const t0 = thTop + 'px';
-  const t1 = (thTop + 38) + 'px';
-
-  const prevArrow = hiddenBefore.length
-    ? `<th style="cursor:pointer;color:var(--b);font-size:14px;padding:4px 4px;min-width:26px;top:${t0}" onclick="showPrevMonths()" title="${hiddenBefore.map(m=>m.label).join(',')} 보기">◀</th>`
-    : `<th style="min-width:26px;top:${t0}"></th>`;
-  const nextArrow = hiddenAfter.length
-    ? `<th style="cursor:pointer;color:var(--b);font-size:14px;padding:4px 4px;min-width:26px;top:${t0}" onclick="showNextMonths()" title="${hiddenAfter.map(m=>m.label).join(',')} 보기">▶</th>`
-    : `<th style="min-width:26px;top:${t0}"></th>`;
-  const prevArrow2 = hiddenBefore.length
-    ? `<th style="cursor:pointer;color:var(--b);font-size:14px;padding:4px 4px;min-width:26px;top:${t1}" onclick="showPrevMonths()">◀</th>`
-    : `<th style="min-width:26px;top:${t1}"></th>`;
-  const nextArrow2 = hiddenAfter.length
-    ? `<th style="cursor:pointer;color:var(--b);font-size:14px;padding:4px 4px;min-width:26px;top:${t1}" onclick="showNextMonths()">▶</th>`
-    : `<th style="min-width:26px;top:${t1}"></th>`;
+  const prevBtn = hiddenBefore.length
+    ? `<th class="arr-th" onclick="showPrevMonths()" title="${hiddenBefore.map(m=>m.label).join(',')} 보기">◀</th>`
+    : '';
+  const nextBtn = hiddenAfter.length
+    ? `<th class="arr-th" onclick="showNextMonths()" title="${hiddenAfter.map(m=>m.label).join(',')} 보기">▶</th>`
+    : '';
 
   document.getElementById('th').innerHTML = `
     <tr class="th-tot">
-      <th style="text-align:left;color:var(--tx2);font-size:10px;top:${t0}">합계</th>
-      <th style="top:${t0}"></th><th style="top:${t0}"></th>
-      ${prevArrow}
-      ${visMons.map(mo => `<th style="top:${t0}">${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`).join('')}
-      ${nextArrow}
-      <th style="top:${t0}"></th>
+      <th style="text-align:left;color:var(--tx2);font-size:10px">합계</th>
+      <th></th><th></th>
+      ${prevBtn}
+      ${visMons.map(mo => `<th>${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`).join('')}
+      ${nextBtn}
+      <th></th>
     </tr>
     <tr>
-      <th style="min-width:130px;text-align:left;top:${t1}">이름</th>
-      <th style="top:${t1}">출생</th>
-      <th style="top:${t1}">성별</th>
-      ${prevArrow2}
-      ${visMons.map(m => `<th class="clickable" onclick="toggleCol('${m.key}')" title="클릭하여 숨기기" style="min-width:85px;top:${t1}">${m.label} <span style="font-size:9px;color:#c7d2fe">숨기기</span></th>`).join('')}
-      ${nextArrow2}
-      <th style="min-width:90px;top:${t1}">설정</th>
+      <th style="min-width:130px;text-align:left">이름</th>
+      <th>출생</th>
+      <th>성별</th>
+      ${prevBtn}
+      ${visMons.map(m => `<th class="clickable" onclick="toggleCol('${m.key}')" style="min-width:80px">${m.label} <span style="font-size:9px;color:#c7d2fe">숨기기</span></th>`).join('')}
+      ${nextBtn}
+      <th style="min-width:80px">설정</th>
     </tr>`;
 
   const s = sorted();
   if (!s.length || (s.length === 1 && s[0]._div)) {
-    document.getElementById('tb').innerHTML = `<tr><td colspan="${visMons.length+6}" class="empty">회원 없음</td></tr>`;
+    document.getElementById('tb').innerHTML = `<tr><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+1}" class="empty">회원 없음</td></tr>`;
     renderUnpaid(cm);
     return;
   }
 
   const rows = s.map(item => {
-    if (item._type === 'div') return `<tr class="divr"><td colspan="${visMons.length+6}">${item.label||'— 일반 회원 —'}</td></tr>`;
-    if (item._type === 'section') return `<tr class="sectr" style="background:${item.bg||'#f8f9fb'}"><td colspan="${visMons.length+6}" style="color:${item.tc||'var(--tx2)'}">${item.label}</td></tr>`;
-    if (item._type === 'famgap') return `<tr class="famgapr"><td colspan="${visMons.length+6}"></td></tr>`;
+    if (item._type === 'div') return `<tr class="divr"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+1}">${item.label||'— 일반 회원 —'}</td></tr>`;
+    if (item._type === 'section') return `<tr class="sectr" style="background:${item.bg||'#f8f9fb'}"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+1}" style="color:${item.tc||'var(--tx2)'}">${item.label}</td></tr>`;
+    if (item._type === 'famgap') return `<tr class="famgapr"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+1}"></td></tr>`;
     const m = item;
     const isAdm = ROLES[m.role] !== undefined;
     const isExempt = !!m.exempt;
@@ -972,8 +951,6 @@ function render() {
         inner = `<span class="pv pv-pl"><span class="plb">완납</span></span>`;
       } else if (pl === '선납') {
         inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">선납</span></span>`;
-      } else if (pl === '후납_ok') {
-        inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb" style="background:#ddd6fe;color:#4c1d95">후납</span></span>`;
       } else if (pd) {
         inner = `<span class="pv pv-ok" title="클릭하여 취소">${fee.toLocaleString()}</span>`;
       } else {
@@ -998,8 +975,7 @@ function render() {
       ${cells}
       <td>
         <button class="tbtn" onclick="openEM(${m.id})" style="padding:4px 8px;font-size:11px" title="정보 수정">✏️</button>
-        ${isExempt ? '' : `<button class="tbtn" onclick="openPM(${m.id})" style="padding:4px 8px;font-size:11px;color:var(--yw)" title="납부설정">💰</button>`}
-        ${isExempt ? '' : `<button class="tbtn" onclick="openBackpayModal(${m.id},'${R.cm}')" style="padding:4px 8px;font-size:11px;color:#7c3aed" title="후납처리">↩</button>`}
+        ${isExempt ? '' : `<button class="tbtn" onclick="openPM(${m.id})" style="padding:4px 8px;font-size:11px;color:var(--yw)" title="납부설정/금액수정">💰</button>`}
       </td>
     </tr>`;
   }).join('');
@@ -1090,31 +1066,12 @@ function openAmtModal(id, key) {
   const m = D.members.find(x => x.id === id);
   if (!m) return;
   if (m.plan && (m.plan.type === '완납' || m.plan.type === '선납')) return;
-  toggleP(id, key);
-}
-function toggleP(id, key) {
-  const m = D.members.find(x => x.id === id);
-  if (!m) return;
-  const was = !!m.pay[key];
-
-  if (was) {
-    // 납부 취소 시: amt도 기본값(memberFee or 월회비)으로 리셋
-    m.pay[key] = false;
-    delete m.amt[key];
-  } else {
-    // 납부 처리 시: 금액 입력 모달
-    AMT_ID = id; AMT_KEY = key;
-    const defaultFee = m.memberFee || D.months.find(x=>x.key===key)?.fee || 5000;
-    document.getElementById('amt-val').value = defaultFee;
-    document.getElementById('amt-name').textContent = m.name;
-    document.getElementById('amt-month').textContent = D.months.find(x=>x.key===key)?.label || key;
-    document.getElementById('amt-backpay-row').style.display = 'none';
-    document.getElementById('amtm').classList.add('on');
-    return;
-  }
-
+  // 미납 클릭 → 바로 기본 금액으로 납부 처리
+  const defaultFee = m.memberFee || D.months.find(x=>x.key===key)?.fee || 5000;
+  m.pay[key] = true;
+  delete m.amt[key]; // 기본 금액이면 amt 불필요
   // 가족 구성원 확인
-  if (!was && m.fgId) {
+  if (m.fgId) {
     const famUnpaid = D.members
       .filter(x => x.fgId === m.fgId && x.id !== id && !isPaid(x, key))
       .sort((a,b) => (REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9));
@@ -1125,25 +1082,17 @@ function toggleP(id, key) {
   }
   sv(); render();
 }
+function toggleP(id, key) {
+  openAmtModal(id, key);
+}
 function saveAmt() {
   const m = D.members.find(x => x.id === AMT_ID);
   if (!m) return;
   const val = parseInt(document.getElementById('amt-val').value) || 0;
   const defaultFee = m.memberFee || D.months.find(x=>x.key===AMT_KEY)?.fee || 5000;
 
-  // 후납 처리
-  const isBackpay = document.getElementById('amt-is-backpay')?.checked;
-  if (isBackpay) {
-    const bpKey = document.getElementById('amt-bp-month').value;
-    if (!bpKey) { alert('후납 적용 월을 선택해주세요.'); return; }
-    if (!m.backpay) m.backpay = {};
-    m.backpay[bpKey] = true;
-    if (val !== defaultFee) m.amt[AMT_KEY] = val; else delete m.amt[AMT_KEY];
-    m.pay[AMT_KEY] = true;
-  } else {
-    if (val !== defaultFee) m.amt[AMT_KEY] = val; else delete m.amt[AMT_KEY];
-    m.pay[AMT_KEY] = true;
-  }
+  if (val !== defaultFee) m.amt[AMT_KEY] = val; else delete m.amt[AMT_KEY];
+  m.pay[AMT_KEY] = true;
 
   // 가족 구성원 확인
   if (m.fgId) {
@@ -1156,23 +1105,6 @@ function saveAmt() {
     });
   }
   closeOv('amtm'); sv(); render();
-}
-function openBackpayModal(id, key) {
-  // 후납 설정: 이번 달 납부에 이전 달 미납을 포함
-  AMT_ID = id; AMT_KEY = key;
-  const m = D.members.find(x => x.id === id);
-  if (!m) return;
-  const defaultFee = m.memberFee || D.months.find(x=>x.key===key)?.fee || 5000;
-  document.getElementById('amt-val').value = defaultFee;
-  document.getElementById('amt-name').textContent = m.name;
-  document.getElementById('amt-month').textContent = D.months.find(x=>x.key===key)?.label || key;
-  // 후납 대상 월 목록 (이전 미납 월들)
-  const unpaidMonths = D.months.filter(mo => mo.key < key && !isPaid(m, mo.key));
-  const bpSel = document.getElementById('amt-bp-month');
-  bpSel.innerHTML = '<option value="">선택...</option>' + unpaidMonths.map(mo=>`<option value="${mo.key}">${mo.label}</option>`).join('');
-  document.getElementById('amt-backpay-row').style.display = '';
-  document.getElementById('amt-is-backpay').checked = true;
-  document.getElementById('amtm').classList.add('on');
 }
 
 // ── TOGGLE PAY (기존 호환용) ─────────────────────────────────────────
