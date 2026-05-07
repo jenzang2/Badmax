@@ -107,7 +107,7 @@ table{border:1px solid #e8eaf0;border-radius:var(--radius2)}
 .row-fam:hover td{background:#f0fefa!important}
 
 /* INDENT (가족 서브회원) */
-.name-indent{padding-left:16px;display:inline-flex;align-items:center;gap:4px;color:var(--tx2)}
+.name-indent{padding-left:4px;display:inline-flex;align-items:center;gap:4px;color:var(--tx2)}
 .name-indent::before{content:'└';color:var(--tx3);font-size:11px}
 .rel-badge{display:inline-block;padding:1px 6px;border-radius:20px;font-size:9px;font-weight:700;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;margin-left:3px}
 
@@ -128,11 +128,11 @@ table{border:1px solid #e8eaf0;border-radius:var(--radius2)}
 .pv-ok:hover{background:var(--g3)}
 .pv-no{background:var(--r2);color:#991b1b;border:1px dashed var(--r3)}
 .pv-no:hover{background:var(--r3)}
-.pv-pl{background:var(--yw2);color:#92400e}
-.td-plan-range{background:var(--yw2)!important}
-.td-plan-start{border-left:2.5px solid #d97706!important;background:var(--yw2)!important}
-.td-plan-end{border-right:2.5px solid #d97706!important;background:var(--yw2)!important}
-.td-plan-mid{background:var(--yw3)!important}
+.pv-pl{background:var(--yw2);color:#92400e;border-radius:7px;display:inline-flex;align-items:center;gap:3px;padding:3px 8px}
+.td-plan-s{background:var(--yw2)!important;padding-right:0!important}
+.td-plan-m{background:var(--yw2)!important;padding-left:0!important;padding-right:0!important}
+.td-plan-e{background:var(--yw2)!important;padding-left:0!important}
+.td-plan-1{background:var(--yw2)!important}
 .pv-pl-cont{background:var(--yw2);color:#92400e;opacity:.7}
 .td-plan-start{border-left:3px solid #d97706!important}
 .td-plan-end{border-right:3px solid #d97706!important}
@@ -236,8 +236,8 @@ tr.row-active{outline:1.5px solid #4f46e5!important}
 <div id="login">
   <div class="lc">
     <span class="li">🏸</span>
-    <div class="lt">배드민턴 모임</div>
-    <div class="ls">BADMAX 운영진 전용</div>
+    <div class="lt">BADMAX</div>
+    <div class="ls">회원관리 (운영진 전용)</div>
     <input class="linp" type="password" id="pw" placeholder="비밀번호를 입력하세요" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="lbtn" onclick="doLogin()">로그인</button>
     <div class="lerr" id="lerr"></div>
@@ -374,8 +374,7 @@ tr.row-active{outline:1.5px solid #4f46e5!important}
   <div class="mttl">💰 납부 설정 — <span id="pl-name" style="color:#4f46e5"></span></div>
   <div class="ptabs">
     <button class="ptab on" id="pt-m" data-pt="월납" onclick="setPT(this)">월납</button>
-    <button class="ptab" id="pt-c" data-pt="완납" onclick="setPT(this)">연납</button>
-    <button class="ptab" id="pt-p" data-pt="선납" onclick="setPT(this)">부분납입</button>
+    <button class="ptab" id="pt-p" data-pt="선납" onclick="setPT(this)">선납</button>
   </div>
   <div id="pl-detail"></div>
   <div class="mbtns">
@@ -915,6 +914,11 @@ function render() {
   const hiddenBefore = D.months.filter(m => R.hiddenCols.has(m.key) && visMons.length && m.key < visMons[0].key);
   const hiddenAfter  = D.months.filter(m => R.hiddenCols.has(m.key) && visMons.length && m.key > visMons[visMons.length-1].key);
   const hidCount = D.months.length - visMons.length;
+  let countBetween = 0;
+  for (let i = 1; i < visMons.length; i++) {
+    countBetween += D.months.filter(m => R.hiddenCols.has(m.key) && m.key > visMons[i-1].key && m.key < visMons[i].key).length > 0 ? 1 : 0;
+  }
+  // 보이는 월 사이에 숨겨진 달 수 합산 (↔ 버튼 열 수)
 
   // Pre-calculate totals for header
   const totals = {};
@@ -936,7 +940,12 @@ function render() {
       <th style="text-align:left;color:var(--tx2);font-size:10px;min-width:130px">합계</th>
       <th></th><th></th>
       ${prevBlank}
-      ${visMons.map(mo => `<th style="min-width:80px">${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`).join('')}
+      ${visMons.map((mo, idx) => {
+        const prevVisKey = idx > 0 ? visMons[idx-1].key : null;
+        const hidBetween = prevVisKey ? D.months.filter(x => R.hiddenCols.has(x.key) && x.key > prevVisKey && x.key < mo.key) : [];
+        const blankBefore = hidBetween.length ? `<th style="width:28px;padding:0"></th>` : '';
+        return blankBefore + `<th style="min-width:80px">${totals[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${paidCount[mo.key]}명</span></th>`;
+      }).join('')}
       ${nextBlank}
       <th style="min-width:80px"></th>
     </tr>
@@ -945,22 +954,28 @@ function render() {
       <th>출생</th>
       <th>성별</th>
       ${prevCell}
-      ${visMons.map(m => `<th class="clickable" onclick="toggleCol('${m.key}')" style="min-width:80px">${m.label} <span style="font-size:9px;color:#c7d2fe">숨기기</span></th>`).join('')}
+      ${visMons.map((m, idx) => {
+        // 이 달 앞에 숨겨진 달이 있으면 해제 버튼 삽입
+        const prevVisKey = idx > 0 ? visMons[idx-1].key : null;
+        const hidBetween = prevVisKey ? D.months.filter(mo => R.hiddenCols.has(mo.key) && mo.key > prevVisKey && mo.key < m.key) : [];
+        const btnBefore = hidBetween.length ? `<th class="arr-th" onclick="revealBetween('${prevVisKey}','${m.key}')" title="${hidBetween.map(x=>x.label).join(',')} 보기" style="font-size:11px;padding:2px 4px">↔</th>` : '';
+        return btnBefore + `<th class="clickable" onclick="toggleCol('${m.key}')" style="min-width:80px">${m.label} <span style="font-size:9px;color:#c7d2fe">숨기기</span></th>`;
+      }).join('')}
       ${nextCell}
       <th style="min-width:80px">설정</th>
     </tr>`;
 
   const s = sorted();
   if (!s.length || (s.length === 1 && s[0]._div)) {
-    document.getElementById('tb').innerHTML = `<tr><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+1}" class="empty">회원 없음</td></tr>`;
+    document.getElementById('tb').innerHTML = `<tr><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}" class="empty">회원 없음</td></tr>`;
     renderUnpaid(cm);
     return;
   }
 
   const rows = s.map(item => {
-    if (item._type === 'div') return `<tr class="divr"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+1}">${item.label||'— 일반 회원 —'}</td></tr>`;
-    if (item._type === 'section') return `<tr class="sectr" style="background:${item.bg||'#f8f9fb'}"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+1}" style="color:${item.tc||'var(--tx2)'}">${item.label}</td></tr>`;
-    if (item._type === 'famgap') return `<tr class="famgapr"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+1}"></td></tr>`;
+    if (item._type === 'div') return `<tr class="divr"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}">${item.label||'— 일반 회원 —'}</td></tr>`;
+    if (item._type === 'section') return `<tr class="sectr" style="background:${item.bg||'#f8f9fb'}"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}" style="color:${item.tc||'var(--tx2)'}">${item.label}</td></tr>`;
+    if (item._type === 'famgap') return `<tr class="famgapr"><td colspan="${3+visMons.length+(hiddenBefore.length?1:0)+(hiddenAfter.length?1:0)+countBetween+1}"></td></tr>`;
     const m = item;
     const isAdm = ROLES[m.role] !== undefined;
     const isExempt = !!m.exempt;
@@ -979,13 +994,14 @@ function render() {
     }
 
     const cells = visMons.map(mo => {
-      if (isExempt) return `<td><span class="pv pv-ex">면제</span></td>`;
+      if (isExempt) return `<td><span style="color:var(--tx3);font-size:15px">—</span></td>`;
       if (isNA(m, mo.key)) return `<td><span style="color:var(--tx3);font-size:13px">—</span></td>`;
       const nowKey = (()=>{ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; })();
       const isFuture = mo.key > nowKey;
       const pd = isPaid(m, mo.key);
       const pl = planLabel(m, mo.key);
       const fee = getFee(m, mo.key);
+      let tdClass = '';
       // — 표시 조건: 미래달이면서 플랜없음 OR 선납 범위 이후 달
       const afterPlan = m.plan && m.plan.type === '선납' && (() => {
         const ranges = m.plan.ranges || [{end:m.plan.end}];
@@ -1001,11 +1017,21 @@ function render() {
       } else if (pl === '선납' || pl === '선납_후납') {
         const badge = pl === '선납_후납' ? '후납' : '선납';
         const ri = getPlanRangeInfo(m, mo.key);
-        if (ri && ri.isStart) {
-          inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">${badge}</span></span>`;
-        } else if (ri && (ri.isMid || ri.isEnd)) {
-          inner = `<span class="pv pv-pl" style="opacity:.5;font-size:11px">${badge}</span>`;
+        if (ri && ri.isStart && !ri.isEnd) {
+          // 시작: 금액+배지, 오른쪽 열과 연결
+          tdClass = 'td-plan-s';
+          inner = `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 0 3px 8px;background:var(--yw2);border-radius:7px 0 0 7px;font-size:12px;font-weight:600;color:#92400e;white-space:nowrap">${fee.toLocaleString()} <span class="plb">${badge}</span></span>`;
+        } else if (ri && ri.isMid) {
+          // 중간: 배지만
+          tdClass = 'td-plan-m';
+          inner = `<span style="display:inline-block;padding:3px 0;background:var(--yw2);width:100%;text-align:center;font-size:12px;font-weight:600;color:#92400e">${badge}</span>`;
+        } else if (ri && ri.isEnd && !ri.isStart) {
+          // 끝: 배지, 왼쪽과 연결
+          tdClass = 'td-plan-e';
+          inner = `<span style="display:inline-flex;align-items:center;padding:3px 8px 3px 0;background:var(--yw2);border-radius:0 7px 7px 0;font-size:12px;font-weight:600;color:#92400e">${badge}</span>`;
         } else {
+          // 단일 셀 or 범위 정보 없음
+          tdClass = 'td-plan-1';
           inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">${badge}</span></span>`;
         }
       } else if (futureDash) {
@@ -1029,7 +1055,7 @@ function render() {
         // 미납 클릭 → 납부처리
         clickFn = `onclick="openAmtModal(${m.id},'${mo.key}')"`;
       }
-      return `<td class="pcell" ${clickFn}>${inner}</td>`;
+      return `<td class="pcell${tdClass?' '+tdClass:''}" ${clickFn}>${inner}</td>`;
     }).join('');
 
     const activeClass = ACTIVE_ID === m.id ? ' row-active' : '';
@@ -1184,6 +1210,17 @@ function toggleCol(key) {
   R.hiddenCols.has(key) ? R.hiddenCols.delete(key) : R.hiddenCols.add(key);
   render();
 }
+function revealBetween(afterKey, beforeKey) {
+  // afterKey ~ beforeKey 사이에 숨겨진 달 모두 표시
+  D.months.filter(m => R.hiddenCols.has(m.key) && m.key > afterKey && m.key < beforeKey)
+    .forEach(m => R.hiddenCols.delete(m.key));
+  render();
+}
+function revealBetween(afterKey, beforeKey) {
+  D.months.filter(m => R.hiddenCols.has(m.key) && m.key > afterKey && m.key < beforeKey)
+    .forEach(m => R.hiddenCols.delete(m.key));
+  render();
+}
 function showPrevMonths() {
   // 현재 보이는 첫 번째 월 바로 이전 1달만 펼치기
   const visMons = D.months.filter(m => !R.hiddenCols.has(m.key));
@@ -1329,7 +1366,7 @@ function openPM(id) {
   if (!m) return;
   PL_LATE = m.plan?.late || false; // 기존 late 값 로드
   document.getElementById('pl-name').textContent = m.name;
-  setPT(null, m.plan?.type || '월납');
+  setPT(null, (m.plan?.type === '완납' ? '선납' : m.plan?.type) || '월납');
   document.getElementById('plm').classList.add('on');
 }
 let PL_LATE = false; // 부분납입 후납 여부
@@ -1339,11 +1376,7 @@ function setPT(el, type) {
   const now = new Date(), y = now.getFullYear();
   const m = D.members.find(x => x.id === PMI);
   let h = '';
-  if (PT === '완납') {
-    h = `<div class="fg"><label>연도</label><input class="fi" id="pl-y" type="number" value="${m?.plan?.year || y}"></div>
-         <div class="fg"><label>납부 금액 (원)</label><input class="fi" id="pl-a" type="number" value="${m?.plan?.amount || 60000}"></div>
-         <div class="info-box" style="margin-top:4px;font-size:11px">연납 처리 → 해당 연도 전월 <strong>선납</strong>으로 표기됩니다</div>`;
-  } else if (PT === '선납') {
+  if (PT === '선납') {
     const existPlan = m?.plan?.type === '선납' ? m.plan : null;
     const existRanges = existPlan?.ranges || (existPlan ? [{start:existPlan.start,end:existPlan.end,amount:existPlan.amount,late:existPlan.late||false}] : []);
     const rangesHtml = existRanges.length
@@ -1423,12 +1456,7 @@ function toggleRangeLate(btn, val) {
 function savePlan() {
   const m = D.members.find(x => x.id === PMI);
   if (!m) return;
-  if (PT === '완납') {
-    const y = parseInt(document.getElementById('pl-y').value);
-    const a = parseInt(document.getElementById('pl-a').value) || 0;
-    m.plan = { type: '완납', year: y, amount: a };
-    for (let mo = 1; mo <= 12; mo++) m.pay[mkey(y, mo)] = true;
-  } else if (PT === '선납') {
+  if (PT === '선납') {
     // 현재 ranges 유지하면서 추가 or 전체 교체
     const existRanges = (m.plan?.type === '선납' && m.plan.ranges) ? [...m.plan.ranges] : [];
     // UI에서 편집 중인 구간들 수집
