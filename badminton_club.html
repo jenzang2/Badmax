@@ -142,7 +142,7 @@ tbody tr:hover:not(.divr){outline:1.5px solid #c7d2fe;outline-offset:-1px}
 /* 후납 pill */
 .pv-late-prev,.pv-late-pay{display:flex;align-items:center;background:#ede9fe;color:#4c1d95;font-size:12px;font-weight:600;white-space:nowrap;position:absolute;top:5px;bottom:5px}
 .pv-late-prev{left:4px;right:-1px;border-radius:7px 0 0 7px;padding-left:8px;justify-content:flex-start}
-.pv-late-pay{left:-1px;right:4px;border-radius:0 7px 7px 0;padding-right:8px;justify-content:center}
+.pv-late-pay{left:-1px;right:4px;border-radius:0 7px 7px 0;padding-right:8px;justify-content:flex-end}
 .pv-ex{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;cursor:default}
 .plb{display:inline-block;padding:0 5px;border-radius:20px;font-size:8px;font-weight:800;background:#fde68a;color:#78350f;margin-left:2px;vertical-align:middle;letter-spacing:.5px}
 
@@ -1054,9 +1054,11 @@ function render() {
         }
       } else if (futureDash) {
         inner = `<span class="pv" style="color:var(--tx3);background:transparent;font-size:15px" title="클릭: 선납처리">—</span>`;
-      } else if (m.lateKeys && m.lateKeys[mo.key]) {
-        inner = `<span class="pv-late-prev">후납</span>`;
       } else if (m.lateKeys && Object.values(m.lateKeys).includes(mo.key)) {
+        // 이 달이 밀린 달 (못 낸 달) → 시작, 배지만
+        inner = `<span class="pv-late-prev">후납</span>`;
+      } else if (m.lateKeys && m.lateKeys[mo.key]) {
+        // 이 달이 납부한 달 (마지막) → 끝, 금액 표시
         inner = `<span class="pv-late-pay">${fee.toLocaleString()} <span style="background:#7c3aed;color:#fff;border-radius:4px;padding:1px 4px;font-size:10px">후납</span></span>`;
       } else if (pd) {
         inner = `<span class="pv pv-ok">${fee.toLocaleString()}</span>`;
