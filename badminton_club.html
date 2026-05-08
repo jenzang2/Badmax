@@ -285,12 +285,7 @@ tr.row-active{outline:1.5px solid #4f46e5}
           <button class="abtn" onclick="openMM()">+ 회원 추가</button>
         </div>
       </div>
-      <div style="overflow-x:auto;border:1px solid var(--bd);border-bottom:none;border-radius:var(--radius2) var(--radius2) 0 0;background:var(--sf2)" id="tw-head">
-        <table id="th-table"><thead id="th"></thead></table>
-      </div>
-      <div class="tw" id="tw" style="border-radius:0 0 var(--radius2) var(--radius2);border-top:none">
-        <table><tbody id="tb"></tbody></table>
-      </div>
+      <div class="tw" id="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
       <div id="ubox" class="ubox"></div>
     </div>
 
@@ -1109,28 +1104,6 @@ function render() {
   }).join('');
 
   document.getElementById('tb').innerHTML = rows;
-
-  // thead/tbody 열 너비 동기화
-  requestAnimationFrame(() => {
-    const thTable = document.getElementById('th-table');
-    const tbTable = document.querySelector('#tw table');
-    if (!thTable || !tbTable) return;
-    const tbCols = tbTable.querySelector('tr');
-    const thCols = thTable.querySelector('tr');
-    if (!tbCols || !thCols) return;
-    const tbTds = tbCols.querySelectorAll('td,th');
-    const thThs = thTable.querySelectorAll('thead tr:last-child th');
-    thThs.forEach((th, i) => {
-      if (tbTds[i]) th.style.minWidth = tbTds[i].offsetWidth + 'px';
-    });
-    thTable.style.width = tbTable.offsetWidth + 'px';
-    document.getElementById('tw-head').scrollLeft = document.getElementById('tw').scrollLeft;
-  });
-
-  // tw 가로 스크롤 시 thead도 같이
-  const tw = document.getElementById('tw');
-  const twHead = document.getElementById('tw-head');
-  tw.onscroll = () => { twHead.scrollLeft = tw.scrollLeft; };
   renderUnpaid(cm);
 }
 
@@ -1212,23 +1185,10 @@ function renderW() {
 // ── 금액/납부 모달 ─────────────────────────────────────
 let AMT_ID = null, AMT_KEY = null;
 function openAmtModal(id, key) {
-  // 미납 클릭 → 바로 기본금액으로 납부 처리
   const m = D.members.find(x => x.id === id);
   if (!m) return;
   if (m.plan && (m.plan.type === '완납' || m.plan.type === '선납')) return;
-  const defaultFee = m.memberFee || D.months.find(x=>x.key===key)?.fee || 5000;
-  m.pay[key] = true;
-  if (!m.amt) m.amt = {};
-  if (defaultFee !== 5000) m.amt[key] = defaultFee;
-  // 가족 구성원 확인
-  if (m.fgId) {
-    const famUnpaid = D.members.filter(x => x.fgId===m.fgId && x.id!==id && !isPaid(x,key))
-      .sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9));
-    famUnpaid.forEach(fm => {
-      if (confirm(`${fm.name}님도 납부 처리할까요?`)) fm.pay[key] = true;
-    });
-  }
-  sv(); render();
+  openAmtModalFull(id, key);
 }
 function openAmtModalFull(id, key) {
   // 💰 버튼용 - 금액 입력 모달
