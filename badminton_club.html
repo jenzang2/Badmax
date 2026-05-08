@@ -1234,7 +1234,13 @@ function saveAmt() {
   if (isLate && lateMon) {
     if (!m.lateKeys) m.lateKeys = {};
     m.lateKeys[lateMon] = AMT_KEY; // lateMon이 AMT_KEY에 후납됨
-    m.pay[lateMon] = true; // 이전 달도 납부처리
+    m.pay[lateMon] = true;
+    // 납부달에 합산금액 저장 (밀린달 수 + 현재달)
+    const lateMons = Object.keys(m.lateKeys).filter(k => m.lateKeys[k] === AMT_KEY);
+    const baseFee = m.memberFee || D.months.find(x=>x.key===AMT_KEY)?.fee || 5000;
+    m.amt[AMT_KEY] = baseFee * (lateMons.length + 1);
+  } else {
+    if (val !== defaultFee) m.amt[AMT_KEY] = val; else delete m.amt[AMT_KEY];
   }
 
   // 가족 구성원 확인
