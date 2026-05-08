@@ -285,7 +285,12 @@ tr.row-active{outline:1.5px solid #4f46e5}
           <button class="abtn" onclick="openMM()">+ 회원 추가</button>
         </div>
       </div>
-      <div class="tw" id="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+      <div style="overflow-x:auto;border:1px solid var(--bd);border-bottom:none;border-radius:var(--radius2) var(--radius2) 0 0;background:var(--sf2)" id="tw-head">
+        <table id="th-table"><thead id="th"></thead></table>
+      </div>
+      <div class="tw" id="tw" style="border-radius:0 0 var(--radius2) var(--radius2);border-top:none">
+        <table><tbody id="tb"></tbody></table>
+      </div>
       <div id="ubox" class="ubox"></div>
     </div>
 
@@ -1104,6 +1109,28 @@ function render() {
   }).join('');
 
   document.getElementById('tb').innerHTML = rows;
+
+  // thead/tbody 열 너비 동기화
+  requestAnimationFrame(() => {
+    const thTable = document.getElementById('th-table');
+    const tbTable = document.querySelector('#tw table');
+    if (!thTable || !tbTable) return;
+    const tbCols = tbTable.querySelector('tr');
+    const thCols = thTable.querySelector('tr');
+    if (!tbCols || !thCols) return;
+    const tbTds = tbCols.querySelectorAll('td,th');
+    const thThs = thTable.querySelectorAll('thead tr:last-child th');
+    thThs.forEach((th, i) => {
+      if (tbTds[i]) th.style.minWidth = tbTds[i].offsetWidth + 'px';
+    });
+    thTable.style.width = tbTable.offsetWidth + 'px';
+    document.getElementById('tw-head').scrollLeft = document.getElementById('tw').scrollLeft;
+  });
+
+  // tw 가로 스크롤 시 thead도 같이
+  const tw = document.getElementById('tw');
+  const twHead = document.getElementById('tw-head');
+  tw.onscroll = () => { twHead.scrollLeft = tw.scrollLeft; };
   renderUnpaid(cm);
 }
 
