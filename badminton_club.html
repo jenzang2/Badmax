@@ -1034,7 +1034,9 @@ function render() {
         const maxEnd = ranges.reduce((mx,r)=>r.end>mx?r.end:mx,'');
         return mo.key > maxEnd;
       })();
-      const futureDash = isFuture && !m.plan && !m.pay[mo.key];
+      const futureDash = (isFuture && !m.plan && !m.pay[mo.key]) || (afterPlan && !m.pay[mo.key]);
+      // 선납 범위 이후 달이면 — (미납 아님)
+      if (afterPlan && !m.pay[mo.key]) return betweenTd + `<td><span style="color:var(--tx3);font-size:15px">—</span></td>`;
       let inner;
       if (pl === '완납_first') {
         inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">선납</span></span>`;
@@ -1054,12 +1056,12 @@ function render() {
         }
       } else if (futureDash) {
         inner = `<span class="pv" style="color:var(--tx3);background:transparent;font-size:15px" title="클릭: 선납처리">—</span>`;
+      } else if (m.lateKeys && m.lateKeys[mo.key]) {
+        // 납부한 달(마지막) → 끝, 금액 표시
+        inner = `<span class="pv-late-pay">${fee.toLocaleString()} <span style="background:#7c3aed;color:#fff;border-radius:4px;padding:1px 4px;font-size:10px">후납</span></span>`;
       } else if (m.lateKeys && Object.values(m.lateKeys).flat().includes(mo.key)) {
         // 밀린 달 → 시작, 배지만
         inner = `<span class="pv-late-prev">후납</span>`;
-      } else if (m.lateKeys && m.lateKeys[mo.key]) {
-        // 납부한 달 → 끝, 금액 표시
-        inner = `<span class="pv-late-pay">${fee.toLocaleString()} <span style="background:#7c3aed;color:#fff;border-radius:4px;padding:1px 4px;font-size:10px">후납</span></span>`;
       } else if (pd) {
         inner = `<span class="pv pv-ok">${fee.toLocaleString()}</span>`;
       } else {
