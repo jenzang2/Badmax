@@ -1034,7 +1034,7 @@ function render() {
         const maxEnd = ranges.reduce((mx,r)=>r.end>mx?r.end:mx,'');
         return mo.key > maxEnd;
       })();
-      const futureDash = (!m.plan && isFuture && !m.pay[mo.key]) || (afterPlan && !m.pay[mo.key]);
+      const futureDash = isFuture && !m.plan && !m.pay[mo.key];
       let inner;
       if (pl === '완납_first') {
         inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">선납</span></span>`;
@@ -1263,7 +1263,7 @@ function saveAmt() {
 function toggleCancel(id, key) {
   const m = D.members.find(x => x.id === id);
   if (!m) return;
-  m.pay[key] = false;
+  delete m.pay[key];
   if (m.amt) delete m.amt[key];
   sv(); render();
 }
