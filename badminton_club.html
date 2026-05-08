@@ -89,7 +89,7 @@ th:first-child{text-align:left}
 /* totals header row */
 .th-tot th{background:#f7f8fc;font-size:12px;font-weight:700;color:var(--g);border-bottom:2px solid var(--bd)}
 .th-tot th:first-child{color:var(--tx2);font-weight:500}
-td{padding:8px 10px;font-size:13px;border-bottom:1px solid #f0f2f7;border-right:1px solid #eaecf0;text-align:center;vertical-align:middle;overflow:visible}
+td{padding:8px 10px;font-size:13px;border-bottom:1px solid #f0f2f7;border-right:1px solid #eaecf0;text-align:center;vertical-align:middle}
 td:last-child{border-right:none}
 td:first-child{text-align:left}
 tbody tr:last-child td{border-bottom:none}
@@ -123,12 +123,14 @@ tbody tr:hover:not(.divr){outline:1.5px solid #c7d2fe;outline-offset:-1px}
 .fai{font-size:11px;color:var(--tx3);margin-left:3px;vertical-align:middle}
 
 /* PAYMENT */
-.pcell{cursor:pointer;transition:background .1s;overflow:visible;position:relative;isolation:isolate}
+.pcell{cursor:pointer;transition:background .1s;position:relative;height:44px;padding:0!important}
 .td-cur-month{background:#f0f7ff!important}
 .th-cur-month{background:#dbeafe!important;color:#1e40af!important}
-.pv-plan-s{display:inline-flex;align-items:center;gap:4px;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 0 4px 8px;border-radius:7px 0 0 7px;margin-right:-9px;position:relative;z-index:3;white-space:nowrap}
-.pv-plan-m{display:inline-flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 0;border-radius:0;margin-left:-9px;margin-right:-9px;position:relative;z-index:2;min-width:calc(100% + 18px)}
-.pv-plan-e{display:inline-flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;padding:4px 12px 4px 8px;border-radius:0 7px 7px 0;margin-left:-9px;position:relative;z-index:3;white-space:nowrap}
+/* 선납 pill - position absolute 방식 */
+.pill-abs-wrap{position:relative;height:28px;display:block}
+.pv-plan-s{position:absolute;top:0;left:4px;right:-50%;height:28px;display:flex;align-items:center;padding-left:8px;background:var(--yw2);border-radius:7px 0 0 7px;color:#92400e;font-size:12px;font-weight:600;white-space:nowrap;z-index:3}
+.pv-plan-m{position:absolute;top:0;left:-50%;right:-50%;height:28px;display:flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;z-index:2}
+.pv-plan-e{position:absolute;top:0;left:-50%;right:4px;height:28px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;background:var(--yw2);border-radius:0 7px 7px 0;color:#92400e;font-size:12px;font-weight:600;white-space:nowrap;z-index:3}
 .pv{display:inline-block;padding:3px 8px;border-radius:7px;font-size:12px;font-weight:600;min-width:54px;text-align:center;transition:all .15s}
 .pv-ok{background:var(--g2);color:#166534}
 .pv-ok:hover{background:var(--g3)}
@@ -137,8 +139,9 @@ tbody tr:hover:not(.divr){outline:1.5px solid #c7d2fe;outline-offset:-1px}
 .pv-pl{background:var(--yw2);color:#92400e;border-radius:7px;display:inline-flex;align-items:center;gap:3px;padding:3px 8px;white-space:nowrap}
 /* 선납 pill 연속 표기 - td 배경 흰색, span이 늘어남 */
 .pill-single{display:inline-flex;align-items:center;gap:3px;background:var(--yw2);border-radius:7px;color:#92400e;font-size:12px;font-weight:600;padding:4px 8px;white-space:nowrap;width:fit-content}
-.pv-late-prev{display:inline-flex;align-items:center;justify-content:center;background:#ede9fe;border-radius:7px 0 0 7px;color:#4c1d95;font-size:12px;font-weight:600;padding:4px 0 4px 8px;margin-right:-9px;position:relative;z-index:2;white-space:nowrap}
-.pv-late-pay{display:inline-flex;align-items:center;gap:4px;background:#ede9fe;border-radius:0 7px 7px 0;color:#4c1d95;font-size:12px;font-weight:600;padding:4px 12px 4px 8px;margin-left:-9px;position:relative;z-index:3;white-space:nowrap}
+/* 후납 pill - position absolute 방식 */
+.pv-late-prev{position:absolute;top:0;left:4px;right:-50%;height:28px;display:flex;align-items:center;padding-left:8px;background:#ede9fe;border-radius:7px 0 0 7px;color:#4c1d95;font-size:12px;font-weight:600;white-space:nowrap;z-index:2}
+.pv-late-pay{position:absolute;top:0;left:-50%;right:4px;height:28px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;background:#ede9fe;border-radius:0 7px 7px 0;color:#4c1d95;font-size:12px;font-weight:600;white-space:nowrap;z-index:3}
 .pv-ex{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;cursor:default}
 .plb{display:inline-block;padding:0 5px;border-radius:20px;font-size:8px;font-weight:800;background:#fde68a;color:#78350f;margin-left:2px;vertical-align:middle;letter-spacing:.5px}
 
@@ -1032,22 +1035,20 @@ function render() {
         const badge = pl === '선납_후납' ? '후납' : '선납';
         const ri = getPlanRangeInfo(m, mo.key);
         if (ri && ri.isStart && !ri.isEnd) {
-          inner = `<span class="pv-plan-s">${fee.toLocaleString()} <span class="plb">${badge}</span></span>`;
+          inner = `<div class="pill-abs-wrap"><span class="pv-plan-s">${fee.toLocaleString()} <span class="plb">${badge}</span></span></div>`;
         } else if (ri && ri.isMid) {
-          inner = `<span class="pv-plan-m">${badge}</span>`;
+          inner = `<div class="pill-abs-wrap"><span class="pv-plan-m">${badge}</span></div>`;
         } else if (ri && ri.isEnd && !ri.isStart) {
-          inner = `<span class="pv-plan-e">${badge}</span>`;
+          inner = `<div class="pill-abs-wrap"><span class="pv-plan-e">${badge}</span></div>`;
         } else {
           inner = `<span class="pill-single">${fee.toLocaleString()}<span class="plb">${badge}</span></span>`;
         }
       } else if (futureDash) {
         inner = `<span class="pv" style="color:var(--tx3);background:transparent;font-size:15px" title="클릭: 선납처리">—</span>`;
       } else if (m.lateKeys && m.lateKeys[mo.key]) {
-        // 이 달이 밀린 달 (못 낸 달) → pill 시작, 텍스트 없이 배경만
-        inner = `<span class="pv-late-prev">후납</span>`;
+        inner = `<div class="pill-abs-wrap"><span class="pv-late-prev">후납</span></div>`;
       } else if (m.lateKeys && Object.values(m.lateKeys).includes(mo.key)) {
-        // 이 달이 실제 납부한 달 → pill 끝, 금액 표시
-        inner = `<span class="pv-late-pay">${fee.toLocaleString()}<span class="plb" style="background:#7c3aed;color:#fff;margin-left:3px">후납</span></span>`;
+        inner = `<div class="pill-abs-wrap"><span class="pv-late-pay">${fee.toLocaleString()} <span style="background:#7c3aed;color:#fff;border-radius:4px;padding:1px 5px;font-size:10px;margin-left:2px">후납</span></span></div>`;
       } else if (pd) {
         inner = `<span class="pv pv-ok">${fee.toLocaleString()}</span>`;
       } else {
