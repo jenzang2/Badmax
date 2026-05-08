@@ -76,7 +76,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .sticky-top{position:sticky;top:52px;z-index:20;background:var(--bg);padding-bottom:4px}
 
 /* TABLE */
-.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow-x:auto;margin-bottom:12px}
+.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow:auto;max-height:calc(100vh - 210px);margin-bottom:12px}
 table{width:100%;border-collapse:collapse}
 thead th{position:sticky;top:0;z-index:4;background:var(--sf2);box-shadow:0 1px 0 var(--bd)}
 th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);border-right:1px solid #eaecf0;text-align:center;white-space:nowrap}
@@ -709,7 +709,10 @@ window.addEventListener('DOMContentLoaded', () => {
 function isPaid(m, key) {
   if (m.exempt) return true;
   if (isNA(m, key)) return true;
-  if (m.lateKeys && (m.lateKeys[key] || Object.values(m.lateKeys).includes(key))) return true;
+  if (m.lateKeys) {
+    if (m.lateKeys[key]) return true; // 납부달
+    if (Object.values(m.lateKeys).flat().includes(key)) return true; // 밀린달
+  }
   if (m.plan) {
     const p = m.plan;
     if (p.type === '완납' && key.startsWith(String(p.year))) return true;
@@ -773,12 +776,9 @@ function getFee(m, key) {
     }
   }
   // 후납 납부달이면 밀린달 수 포함 합산 금액
-  if (m.lateKeys) {
-    const lateMons = Object.keys(m.lateKeys).filter(k => m.lateKeys[k] === key);
-    if (lateMons.length > 0) {
-      const baseFee = m.memberFee || (D.months.find(x => x.key === key)?.fee || 5000);
-      return baseFee * (lateMons.length + 1); // 밀린달 수 + 현재달
-    }
+  if (m.lateKeys && m.lateKeys[key]) {
+    const baseFee = m.memberFee || (D.months.find(x => x.key === key)?.fee || 5000);
+    return baseFee * (m.lateKeys[key].length + 1);
   }
   return m.memberFee || (D.months.find(x => x.key === key)?.fee || 5000);
 }
@@ -1054,11 +1054,11 @@ function render() {
         }
       } else if (futureDash) {
         inner = `<span class="pv" style="color:var(--tx3);background:transparent;font-size:15px" title="클릭: 선납처리">—</span>`;
-      } else if (m.lateKeys && Object.values(m.lateKeys).includes(mo.key)) {
-        // 이 달이 밀린 달 (못 낸 달) → 시작, 배지만
+      } else if (m.lateKeys && Object.values(m.lateKeys).flat().includes(mo.key)) {
+        // 밀린 달 → 시작, 배지만
         inner = `<span class="pv-late-prev">후납</span>`;
       } else if (m.lateKeys && m.lateKeys[mo.key]) {
-        // 이 달이 납부한 달 (마지막) → 끝, 금액 표시
+        // 납부한 달 → 끝, 금액 표시
         inner = `<span class="pv-late-pay">${fee.toLocaleString()} <span style="background:#7c3aed;color:#fff;border-radius:4px;padding:1px 4px;font-size:10px">후납</span></span>`;
       } else if (pd) {
         inner = `<span class="pv pv-ok">${fee.toLocaleString()}</span>`;
@@ -1235,12 +1235,13 @@ function saveAmt() {
   const lateMon = document.getElementById('amt-late-month')?.value;
   if (isLate && lateMon) {
     if (!m.lateKeys) m.lateKeys = {};
-    m.lateKeys[lateMon] = AMT_KEY; // lateMon이 AMT_KEY에 후납됨
+    // lateKeys[납부달] = 밀린달 (납부달이 key)
+    if (!m.lateKeys[AMT_KEY]) m.lateKeys[AMT_KEY] = [];
+    if (!m.lateKeys[AMT_KEY].includes(lateMon)) m.lateKeys[AMT_KEY].push(lateMon);
     m.pay[lateMon] = true;
-    // 납부달에 합산금액 저장 (밀린달 수 + 현재달)
-    const lateMons = Object.keys(m.lateKeys).filter(k => m.lateKeys[k] === AMT_KEY);
+    // 납부달에 합산금액 저장
     const baseFee = m.memberFee || D.months.find(x=>x.key===AMT_KEY)?.fee || 5000;
-    m.amt[AMT_KEY] = baseFee * (lateMons.length + 1);
+    m.amt[AMT_KEY] = baseFee * (m.lateKeys[AMT_KEY].length + 1);
   } else {
     if (val !== defaultFee) m.amt[AMT_KEY] = val; else delete m.amt[AMT_KEY];
   }
