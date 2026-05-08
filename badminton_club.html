@@ -76,7 +76,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .sticky-top{position:sticky;top:52px;z-index:20;background:var(--bg);padding-bottom:4px}
 
 /* TABLE */
-.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow:auto;max-height:calc(100vh - 210px);margin-bottom:12px}
+.tw{background:white;border:1px solid var(--bd);border-radius:var(--radius2);overflow-x:auto;margin-bottom:12px}
 table{width:100%;border-collapse:collapse}
 thead th{position:sticky;top:0;z-index:4;background:var(--sf2);box-shadow:0 1px 0 var(--bd)}
 th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);background:var(--sf2);border-bottom:1px solid var(--bd);border-right:1px solid #eaecf0;text-align:center;white-space:nowrap}
@@ -1229,19 +1229,16 @@ function saveAmt() {
   if (!m) return;
   const val = parseInt(document.getElementById('amt-val').value) || 0;
   const defaultFee = m.memberFee || D.months.find(x=>x.key===AMT_KEY)?.fee || 5000;
-  if (val !== defaultFee) m.amt[AMT_KEY] = val; else delete m.amt[AMT_KEY];
   m.pay[AMT_KEY] = true;
 
-  // 후납 처리: 선택한 이전 달에 '후납' 마킹
+  // 후납 처리
   const isLate = document.getElementById('amt-is-late')?.checked;
   const lateMon = document.getElementById('amt-late-month')?.value;
   if (isLate && lateMon) {
     if (!m.lateKeys) m.lateKeys = {};
-    // lateKeys[납부달] = 밀린달 (납부달이 key)
     if (!m.lateKeys[AMT_KEY]) m.lateKeys[AMT_KEY] = [];
     if (!m.lateKeys[AMT_KEY].includes(lateMon)) m.lateKeys[AMT_KEY].push(lateMon);
     m.pay[lateMon] = true;
-    // 납부달에 합산금액 저장
     const baseFee = m.memberFee || D.months.find(x=>x.key===AMT_KEY)?.fee || 5000;
     m.amt[AMT_KEY] = baseFee * (m.lateKeys[AMT_KEY].length + 1);
   } else {
