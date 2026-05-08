@@ -374,6 +374,7 @@ tr.row-active{outline:1.5px solid #4f46e5}
   <div class="ptabs">
     <button class="ptab on" id="pt-m" data-pt="월납" onclick="setPT(this)">월납</button>
     <button class="ptab" id="pt-p" data-pt="선납" onclick="setPT(this)">선납</button>
+    <button class="ptab" id="pt-l" data-pt="후납" onclick="setPT(this)">후납</button>
   </div>
   <div id="pl-detail"></div>
   <div class="mbtns">
@@ -408,26 +409,15 @@ tr.row-active{outline:1.5px solid #4f46e5}
 <!-- 금액 입력/수정 모달 -->
 <div class="ov" id="amtm">
 <div class="modal">
-  <div class="mttl">💰 납부 처리 — <span id="amt-name" style="color:#4f46e5"></span></div>
-  <div class="fg">
-    <label>납부 월</label>
-    <select class="fi" id="amt-month-sel"></select>
-  </div>
+  <div class="mttl">💰 금액 수정 — <span id="amt-name" style="color:#4f46e5"></span></div>
+  <div style="font-size:12px;color:var(--tx2);margin-bottom:12px"><span id="amt-month"></span></div>
   <div class="fg">
     <label>입금 금액 (원)</label>
     <input class="fi" id="amt-val" type="number" placeholder="5000">
   </div>
-  <div class="fg" id="amt-late-row" style="display:none">
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500">
-      <input type="checkbox" id="amt-is-late"> 후납 처리 (이전 달 밀린 금액 포함)
-    </label>
-    <select class="fi" id="amt-late-month" style="margin-top:6px;display:none">
-      <option value="">밀린 달 선택...</option>
-    </select>
-  </div>
   <div class="mbtns">
     <button class="mbtn mcan" onclick="closeOv('amtm')">취소</button>
-    <button class="mbtn mpri" onclick="saveAmt()">납부 완료</button>
+    <button class="mbtn mpri" onclick="saveAmt()">저장</button>
   </div>
 </div>
 </div>
@@ -1045,9 +1035,8 @@ function render() {
         const maxEnd = ranges.reduce((mx,r)=>r.end>mx?r.end:mx,'');
         return mo.key > maxEnd;
       })();
-      const futureDash = (isFuture && !m.plan && !m.pay[mo.key]) || (afterPlan && !m.pay[mo.key]);
-      // 선납 범위 이후 달이면 — (미납 아님)
-      if (afterPlan && !m.pay[mo.key]) return betweenTd + `<td><span style="color:var(--tx3);font-size:15px">—</span></td>`;
+      const futureDash = isFuture && !m.pay[mo.key];
+      if ((futureDash && !m.plan) || (afterPlan && !m.pay[mo.key])) return betweenTd + `<td><span style="color:var(--tx3);font-size:15px">—</span></td>`;
       let inner;
       if (pl === '완납_first') {
         inner = `<span class="pv pv-pl">${fee.toLocaleString()}<span class="plb">선납</span></span>`;
@@ -1102,7 +1091,7 @@ function render() {
       <td style="white-space:nowrap"><div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap">${nameHtml}</div></td>
       ${cells}
       <td style="white-space:nowrap">
-        ${isExempt ? '' : `<button class="tbtn" onclick="openAmtModalFull(${m.id},'${R.cm}')" style="padding:4px 8px;font-size:11px;color:var(--yw)" title="금액수정/후납">💰</button>`}
+        ${isExempt ? '' : `<button class="tbtn" onclick="openPM(${m.id})" style="padding:4px 8px;font-size:11px;color:var(--yw)" title="납부설정">💰</button>`}
       </td>
     </tr>`;
   }).join('');
@@ -1211,35 +1200,11 @@ function openAmtModalFull(id, key) {
   if (!m) return;
   AMT_ID = id; AMT_KEY = key;
   // 납부 월 선택 드롭다운
-  const monSel = document.getElementById('amt-month-sel');
-  monSel.innerHTML = D.months.map(mo =>
-    `<option value="${mo.key}" ${mo.key===key?'selected':''}>${mo.label}</option>`
-  ).join('');
-  monSel.onchange = () => {
-    AMT_KEY = monSel.value;
-    updateLateUI(m, AMT_KEY);
-  };
   document.getElementById('amt-name').textContent = m.name;
+  document.getElementById('amt-month').textContent = (D.months.find(x=>x.key===key)?.label || key) + ' 납부';
   const defaultFee = m.memberFee || D.months.find(x=>x.key===key)?.fee || 5000;
   document.getElementById('amt-val').value = m.amt?.[key] || defaultFee;
-  updateLateUI(m, key);
   document.getElementById('amtm').classList.add('on');
-}
-function updateLateUI(m, key) {
-  const unpaidBefore = D.months.filter(mo => mo.key < key && !isPaid(m, mo.key) && !isNA(m, mo.key));
-  const lateRow = document.getElementById('amt-late-row');
-  const lateSel = document.getElementById('amt-late-month');
-  const lateChk = document.getElementById('amt-is-late');
-  lateChk.checked = false;
-  lateSel.style.display = 'none';
-  if (unpaidBefore.length) {
-    lateRow.style.display = '';
-    lateSel.innerHTML = '<option value="">밀린 달 선택...</option>' +
-      unpaidBefore.map(mo => `<option value="${mo.key}">${mo.label}</option>`).join('');
-    lateChk.onchange = () => { lateSel.style.display = lateChk.checked ? '' : 'none'; };
-  } else {
-    lateRow.style.display = 'none';
-  }
 }
 function toggleP(id, key) {
   openAmtModal(id, key);
@@ -1444,7 +1409,8 @@ function openPM(id) {
   if (!m) return;
   PL_LATE = m.plan?.late || false; // 기존 late 값 로드
   document.getElementById('pl-name').textContent = m.name;
-  setPT(null, (m.plan?.type === '완납' ? '선납' : m.plan?.type) || '월납');
+  const initType = m.plan?.type === '완납' ? '선납' : (m.plan?.type || '월납');
+  setPT(null, initType);
   document.getElementById('plm').classList.add('on');
 }
 let PL_LATE = false; // 부분납입 후납 여부
@@ -1454,7 +1420,33 @@ function setPT(el, type) {
   const now = new Date(), y = now.getFullYear();
   const m = D.members.find(x => x.id === PMI);
   let h = '';
-  if (PT === '선납') {
+  if (PT === '후납') {
+    // 현재 회원의 미납 달 목록
+    const unpaidMons = D.months.filter(mo => !isPaid(m, mo.key) && !isNA(m, mo.key));
+    const paidMons = D.months.filter(mo => isPaid(m, mo.key) && !isNA(m, mo.key));
+    h = `<div class="fg"><label>밀린 달 (후납 대상)</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+        ${D.months.map(mo => {
+          const isLateKey = m?.lateKeys && m.lateKeys[mo.key];
+          const isUnpaid = !isPaid(m, mo.key) && !isNA(m, mo.key);
+          if (!isUnpaid && !isLateKey) return '';
+          const checked = isLateKey ? 'checked' : '';
+          return `<label style="display:flex;align-items:center;gap:4px;cursor:pointer;background:#f5f3ff;border-radius:6px;padding:4px 8px;font-size:12px">
+            <input type="checkbox" class="late-mon-chk" value="${mo.key}" ${checked}> ${mo.label}
+          </label>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="fg"><label>납부한 달 (합산 납부일)</label>
+      <select class="fi" id="late-pay-mon">
+        <option value="">선택...</option>
+        ${D.months.filter(mo => !isNA(m, mo.key)).map(mo =>
+          `<option value="${mo.key}">${mo.label}</option>`
+        ).join('')}
+      </select>
+    </div>
+    <div class="info-box" style="font-size:11px">밀린 달 선택 후 실제로 납부한 달을 지정하세요.<br>납부달에 합산금액이 자동 계산됩니다.</div>`;
+  } else if (PT === '선납') {
     const existPlan = m?.plan?.type === '선납' ? m.plan : null;
     const existRanges = existPlan?.ranges || (existPlan ? [{start:existPlan.start,end:existPlan.end,amount:existPlan.amount,late:existPlan.late||false}] : []);
     const rangesHtml = existRanges.length
@@ -1534,7 +1526,25 @@ function toggleRangeLate(btn, val) {
 function savePlan() {
   const m = D.members.find(x => x.id === PMI);
   if (!m) return;
-  if (PT === '선납') {
+  if (PT === '후납') {
+    const payMon = document.getElementById('late-pay-mon')?.value;
+    if (!payMon) { alert('납부한 달을 선택해주세요.'); return; }
+    const chks = document.querySelectorAll('.late-mon-chk:checked');
+    if (!chks.length) { alert('밀린 달을 선택해주세요.'); return; }
+    if (!m.lateKeys) m.lateKeys = {};
+    if (!m.amt) m.amt = {};
+    // 이 납부달의 기존 후납 초기화
+    Object.keys(m.lateKeys).forEach(k => { if (m.lateKeys[k] === payMon) delete m.lateKeys[k]; });
+    const baseFee = m.memberFee || 5000;
+    chks.forEach(chk => {
+      m.lateKeys[chk.value] = payMon;
+      m.pay[chk.value] = true;
+    });
+    m.pay[payMon] = true;
+    const lateCount = Object.keys(m.lateKeys).filter(k => m.lateKeys[k] === payMon).length;
+    m.amt[payMon] = baseFee * (lateCount + 1);
+    closeOv('plm'); sv(); render(); return;
+  } else if (PT === '선납') {
     // 현재 ranges 유지하면서 추가 or 전체 교체
     const existRanges = (m.plan?.type === '선납' && m.plan.ranges) ? [...m.plan.ranges] : [];
     // UI에서 편집 중인 구간들 수집
