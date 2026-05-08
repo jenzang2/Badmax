@@ -414,7 +414,14 @@ tr.row-active{outline:1.5px solid #4f46e5}
     <label>입금 금액 (원)</label>
     <input class="fi" id="amt-val" type="number" placeholder="5000">
   </div>
-
+  <div class="fg" id="amt-late-row" style="display:none">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500">
+      <input type="checkbox" id="amt-is-late"> 후납 처리 (이전 달 밀린 금액 포함)
+    </label>
+    <select class="fi" id="amt-late-month" style="margin-top:6px;display:none">
+      <option value="">밀린 달 선택...</option>
+    </select>
+  </div>
   <div class="mbtns">
     <button class="mbtn mcan" onclick="closeOv('amtm')">취소</button>
     <button class="mbtn mpri" onclick="saveAmt()">납부 완료</button>
