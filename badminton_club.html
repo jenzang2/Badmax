@@ -127,7 +127,7 @@ tbody tr:hover:not(.divr){outline:1.5px solid #c7d2fe;outline-offset:-1px}
 .td-cur-month{background:#f0f7ff!important}
 .th-cur-month{background:#dbeafe!important;color:#1e40af!important}
 /* 선납 pill - td 높이 전체 채우기, 셀 경계에서 이어짐 */
-.pv-plan-s,.pv-plan-m,.pv-plan-e{display:flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;white-space:nowrap;position:absolute;top:0;bottom:0}
+.pv-plan-s,.pv-plan-m,.pv-plan-e{display:flex;align-items:center;justify-content:center;background:var(--yw2);color:#92400e;font-size:12px;font-weight:600;white-space:nowrap;position:absolute;top:5px;bottom:5px}
 .pv-plan-s{left:4px;right:-1px;border-radius:7px 0 0 7px;padding-left:8px;justify-content:flex-start}
 .pv-plan-m{left:-1px;right:-1px;border-radius:0}
 .pv-plan-e{left:-1px;right:4px;border-radius:0 7px 7px 0;padding-right:8px;justify-content:center}
@@ -140,7 +140,7 @@ tbody tr:hover:not(.divr){outline:1.5px solid #c7d2fe;outline-offset:-1px}
 /* 선납 pill 연속 표기 - td 배경 흰색, span이 늘어남 */
 .pill-single{display:inline-flex;align-items:center;gap:3px;background:var(--yw2);border-radius:7px;color:#92400e;font-size:12px;font-weight:600;padding:4px 8px;white-space:nowrap;width:fit-content}
 /* 후납 pill */
-.pv-late-prev,.pv-late-pay{display:flex;align-items:center;background:#ede9fe;color:#4c1d95;font-size:12px;font-weight:600;white-space:nowrap;position:absolute;top:0;bottom:0}
+.pv-late-prev,.pv-late-pay{display:flex;align-items:center;background:#ede9fe;color:#4c1d95;font-size:12px;font-weight:600;white-space:nowrap;position:absolute;top:5px;bottom:5px}
 .pv-late-prev{left:4px;right:-1px;border-radius:7px 0 0 7px;padding-left:8px;justify-content:flex-start}
 .pv-late-pay{left:-1px;right:4px;border-radius:0 7px 7px 0;padding-right:8px;justify-content:center}
 .pv-ex{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;cursor:default}
@@ -770,6 +770,14 @@ function getFee(m, key) {
     const ranges = m.plan.ranges || [{start:m.plan.start, end:m.plan.end, amount:m.plan.amount}];
     for (const r of ranges) {
       if (key === r.start && r.amount > 0) return r.amount;
+    }
+  }
+  // 후납 납부달이면 밀린달 수 포함 합산 금액
+  if (m.lateKeys) {
+    const lateMons = Object.keys(m.lateKeys).filter(k => m.lateKeys[k] === key);
+    if (lateMons.length > 0) {
+      const baseFee = m.memberFee || (D.months.find(x => x.key === key)?.fee || 5000);
+      return baseFee * (lateMons.length + 1); // 밀린달 수 + 현재달
     }
   }
   return m.memberFee || (D.months.find(x => x.key === key)?.fee || 5000);
