@@ -124,10 +124,11 @@ tr.row-active{outline:1.5px solid #4f46e5}
 .pill-m{left:-1px;right:-1px;border-radius:0;justify-content:center}
 .pill-e{left:-1px;right:5px;border-radius:0 7px 7px 0;justify-content:center}
 .pill-solo{left:5px;right:5px;border-radius:7px;padding:0 8px;gap:4px}
-.pill-late-s,.pill-late-m,.pill-late-e{position:absolute;top:5px;bottom:5px;background:#ede9fe;color:#4c1d95;display:flex;align-items:center;font-size:12px;font-weight:600;white-space:nowrap;pointer-events:none}
-.pill-late-s{left:5px;right:-1px;border-radius:7px 0 0 7px;}
-.pill-late-m{left:-1px;right:-1px;border-radius:0;}
-.pill-late-e{left:-1px;right:5px;border-radius:0 7px 7px 0;justify-content:flex-end;padding-right:8px;gap:4px}
+.pill-late-s,.pill-late-m,.pill-late-e,.pill-late-solo{position:absolute;top:5px;bottom:5px;background:#dbeafe;color:#1e40af;display:flex;align-items:center;font-size:12px;font-weight:600;white-space:nowrap;pointer-events:none}
+.pill-late-s{left:5px;right:-1px;border-radius:7px 0 0 7px;justify-content:center;gap:4px}
+.pill-late-m{left:-1px;right:-1px;border-radius:0;justify-content:center}
+.pill-late-e{left:-1px;right:5px;border-radius:0 7px 7px 0;justify-content:center;padding-right:8px;gap:4px}
+.pill-late-solo{left:5px;right:5px;border-radius:7px;padding:0 8px;gap:4px}
 .col-gap-th{width:20px!important;min-width:20px!important;padding:0!important;cursor:pointer;text-align:center;font-size:12px;font-weight:700;color:var(--b);border-right:1px solid #eaecf0}
 .col-gap-th:hover{background:#dbeafe!important}
 .col-gap-td{width:20px!important;min-width:20px!important;padding:0!important;border-right:1px solid #f0f2f7}
@@ -408,7 +409,7 @@ function inPlan(m,k){if(!m.plan||m.plan.type!=='선납')return false;return(m.pl
 function isPaid(m,k){if(m.exempt)return true;if(isNA(m,k))return true;if(m.lateKeys&&(m.lateKeys[k]||Object.values(m.lateKeys).includes(k)))return true;if(inPlan(m,k))return true;return!!m.pay[k];}
 function getFee(m,k){if(m.exempt)return 0;if(m.amt&&m.amt[k]!=null)return m.amt[k];if(m.plan&&m.plan.type==='선납'){const ranges=m.plan.ranges||[{start:m.plan.start,end:m.plan.end,amount:m.plan.amount}];for(const r of ranges)if(k===r.start&&r.amount>0)return r.amount;}if(m.lateKeys&&Object.values(m.lateKeys).includes(k)){const base=m.memberFee||(D.months.find(x=>x.key===k)?.fee||5000);return base*(Object.keys(m.lateKeys).filter(x=>m.lateKeys[x]===k).length+1);}return m.memberFee||(D.months.find(x=>x.key===k)?.fee||5000);}
 function planPos(m,k){if(!m.plan||m.plan.type!=='선납')return null;const vis=D.months.filter(x=>!R.hiddenCols.has(x.key)).map(x=>x.key);for(const r of(m.plan.ranges||[{start:m.plan.start,end:m.plan.end}])){if(k<r.start||k>r.end)continue;const vir=vis.filter(v=>v>=r.start&&v<=r.end);if(!vir.length)return null;const isS=k===vir[0],isE=k===vir[vir.length-1];return vir.length===1?'solo':isS?'start':isE?'end':'mid';}return null;}
-function latePos(m,k){if(!m.lateKeys)return null;if(m.lateKeys[k]){const payK=m.lateKeys[k];const vis=D.months.filter(x=>!R.hiddenCols.has(x.key)).map(x=>x.key);const lk=Object.keys(m.lateKeys).filter(x=>m.lateKeys[x]===payK).sort().filter(x=>vis.includes(x));return k===lk[0]?'late-start':'late-mid';}if(Object.values(m.lateKeys).includes(k))return'late-end';return null;}
+function latePos(m,k){if(!m.lateKeys)return null;const isPayK=Object.values(m.lateKeys).includes(k);const isMissK=!!m.lateKeys[k];if(!isPayK&&!isMissK)return null;const payK=isMissK?m.lateKeys[k]:k;const vis=D.months.filter(x=>!R.hiddenCols.has(x.key)).map(x=>x.key);const missKeys=Object.keys(m.lateKeys).filter(x=>m.lateKeys[x]===payK).sort().filter(x=>vis.includes(x));const allKeys=[...missKeys,payK].filter(x=>vis.includes(x));if(allKeys.length===1)return'late-solo';const isFirst=k===allKeys[0],isLast=k===allKeys[allKeys.length-1];if(isPayK)return isFirst?'late-solo':'late-end';return isFirst?'late-start':'late-mid';}
 const REL_ORDER={'배우자':0,'자녀':1,'부모':2,'형제/자매':3};
 function setMode(v){R.mode=v;['def','alpha','fam'].forEach(k=>document.getElementById('ms-'+k).classList.toggle('on',k===v));render();}
 function pickHead(grp){const ldr=grp.find(m=>m.fgLeader);if(ldr)return{head:ldr,subs:grp.filter(m=>m.id!==ldr.id).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9))};const s=[...grp].sort((a,b)=>a.id-b.id);return{head:s[0],subs:s.slice(1).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9))};}
@@ -473,8 +474,10 @@ function render(){
       else if(pp==='start')inner=`<span class="pill-s">${fee>0?fee.toLocaleString():''}<span class="plb">선납</span></span>`;
       else if(pp==='mid')inner=`<span class="pill-m"><span class="plb">선납</span></span>`;
       else if(pp==='end')inner=`<span class="pill-e"><span class="plb">선납</span></span>`;
-      else if(lp==='late-start'||lp==='late-mid')inner=`<span class="pill-late-s">후납</span>`;
-      else if(lp==='late-end')inner=`<span class="pill-late-e">${fee.toLocaleString()} <span class="plb-late">후납</span></span>`;
+      else if(lp==='late-solo')inner=`<span class="pill-late-solo">${fee.toLocaleString()}<span class="plb-late">후납</span></span>`;
+      else if(lp==='late-start')inner=`<span class="pill-late-s">후납</span>`;
+      else if(lp==='late-mid')inner=`<span class="pill-late-m">후납</span>`;
+      else if(lp==='late-end')inner=`<span class="pill-late-e">${fee.toLocaleString()}<span class="plb-late">후납</span></span>`;
       else if(isFut&&!pd)inner=`<span class="pv-dash">—</span>`;
       else if(pd)inner=`<span class="pv pv-ok">${fee.toLocaleString()}</span>`;
       else inner=`<span class="pv pv-no">미납</span>`;
