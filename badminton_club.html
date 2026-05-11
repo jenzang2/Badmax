@@ -125,7 +125,7 @@ tr.row-active{outline:1.5px solid #4f46e5}
 .pill-e{left:-1px;right:5px;border-radius:0 7px 7px 0;justify-content:center}
 .pill-solo{left:5px;right:5px;border-radius:7px;padding:0 8px;gap:4px}
 .pill-late-s,.pill-late-m,.pill-late-e,.pill-late-solo{position:absolute;top:5px;bottom:5px;background:#dbeafe;color:#1e40af;display:flex;align-items:center;font-size:12px;font-weight:600;white-space:nowrap;pointer-events:none}
-.pill-late-s{left:5px;right:-1px;border-radius:7px 0 0 7px;justify-content:center;gap:4px}
+.pill-late-s{left:5px;right:-1px;border-radius:7px 0 0 7px;justify-content:center;gap:4px}.pill-pre-s,.pill-pre-m,.pill-pre-e,.pill-pre-solo{position:absolute;top:5px;bottom:5px;background:#fef9c3;color:#854d0e;display:flex;align-items:center;font-size:12px;font-weight:600;white-space:nowrap;pointer-events:none}.pill-pre-solo{left:5px;right:5px;border-radius:7px;padding:0 8px;gap:4px}.pill-pre-s{left:5px;right:-1px;border-radius:7px 0 0 7px;justify-content:center;gap:4px}.pill-pre-m{left:-1px;right:-1px;border-radius:0;justify-content:center}.pill-pre-e{left:-1px;right:5px;border-radius:0 7px 7px 0;justify-content:center;padding-right:8px;gap:4px}
 .pill-late-m{left:-1px;right:-1px;border-radius:0;justify-content:center}
 .pill-late-e{left:-1px;right:5px;border-radius:0 7px 7px 0;justify-content:center;padding-right:8px;gap:4px}
 .pill-late-solo{left:5px;right:5px;border-radius:7px;padding:0 8px;gap:4px}
@@ -276,10 +276,10 @@ select.fi{cursor:pointer}
   <div class="mttl">💰 납부 설정 — <span id="pl-name" style="color:#4f46e5"></span></div>
   <div class="ptabs">
     <button class="ptab on" id="pt-m" data-pt="월납" onclick="setPT(this)">월납</button>
-    <button class="ptab" id="pt-p" data-pt="선납" onclick="setPT(this)">선납</button>
-    <button class="ptab" id="pt-l" data-pt="후납" onclick="setPT(this)">후납</button>
+    <button class="ptab" id="pt-p" data-pt="부분납" onclick="setPT(this)">부분납</button>
   </div>
   <div id="pl-detail"></div>
+  <div id="plm-add-row" style="display:none;padding:0 0 10px 0"><button class="mbtn" onclick="addPartial()" style="width:100%;background:#f0fdf4;color:#166534;border:1.5px solid #bbf7d0;font-size:13px">+ 부분납 추가</button></div>
   <div class="mbtns"><button class="mbtn mcan" onclick="closeOv('plm')">취소</button><button class="mbtn mpri" onclick="savePlan()">저장</button></div>
 </div></div>
 <div class="ov" id="wdm"><div class="modal">
@@ -372,7 +372,7 @@ const INIT={months:[{key:M3,label:'3월',fee:5000},{key:M4,label:'4월',fee:5000
   {id:51,name:'이윤자',year:1984,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
   {id:52,name:'이재승',year:2001,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
   {id:53,name:'이정환',year:1991,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
-  {id:54,name:'이준완',year:1998,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M4]:true},amt:{},plan:null,memo:''},
+  {id:54,name:'이준완',year:1998,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M4]:true,[M5]:true},amt:{'2026-02':10000},plan:{type:'선납',ranges:[{start:'2026-02',end:'2026-03',amount:10000,late:false}]},memo:''},
   {id:55,name:'이지순',year:1984,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
   {id:56,name:'이지웅',year:1986,g:'남',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
   {id:57,name:'이지현',year:1975,g:'여',role:'일반',fgId:null,fgRel:'',pay:{[M3]:true,[M4]:true},amt:{},plan:null,memo:''},
@@ -393,7 +393,7 @@ let D={},_saving=false;
 let R={view:'m',cm:M3,q:'',fu:false,mode:'def',hiddenCols:new Set()};
 let ACTIVE_ID=null,EID=null,PMI=null,WMI=null,PT='월납';
 function toArr(v){if(!v)return[];if(Array.isArray(v))return v.filter(Boolean);return Object.values(v).filter(Boolean);}
-function normM(m){if(!m)return null;let plan=m.plan||null;if(plan&&plan.type==='완납'){const yr=plan.year||2026,amt=plan.amount||0;const paidMo=Object.keys(m.amt||{}).find(k=>k.startsWith(String(yr)));plan={type:'선납',ranges:[{start:paidMo||(yr+'-01'),end:yr+'-12',amount:amt,late:false}]};}return{...m,pay:(m.pay&&typeof m.pay==='object'&&!Array.isArray(m.pay))?m.pay:{},amt:(m.amt&&typeof m.amt==='object'&&!Array.isArray(m.amt))?m.amt:{},plan,lateKeys:(m.lateKeys&&typeof m.lateKeys==='object')?m.lateKeys:{},exempt:(m.role==='운영진')?true:!!m.exempt,fgId:m.fgId||null,fgRel:m.fgRel||'',fgLeader:!!m.fgLeader,memberFee:m.memberFee||null,startMonth:m.startMonth||null};}
+function normM(m){if(!m)return null;let plan=m.plan||null;if(plan&&plan.type==='완납'){const yr=plan.year||2026,amt=plan.amount||0;const paidMo=Object.keys(m.amt||{}).find(k=>k.startsWith(String(yr)));plan={type:'선납',ranges:[{start:paidMo||(yr+'-01'),end:yr+'-12',amount:amt,late:false}]};}const pay=(m.pay&&typeof m.pay==='object'&&!Array.isArray(m.pay))?{...m.pay}:{};const amt2=(m.amt&&typeof m.amt==='object'&&!Array.isArray(m.amt))?m.amt:{};return{...m,pay,amt:amt2,plan,lateKeys:(m.lateKeys&&typeof m.lateKeys==='object')?m.lateKeys:{},admMiss:(m.admMiss&&typeof m.admMiss==='object')?m.admMiss:{},exempt:!!m.exempt,fgId:m.fgId||null,fgRel:m.fgRel||'',fgLeader:!!m.fgLeader,memberFee:m.memberFee||null,startMonth:m.startMonth||null};}
 function normD(v){if(!v)return JSON.parse(JSON.stringify(INIT));return{months:toArr(v.months),withdrawn:toArr(v.withdrawn).map(normM).filter(Boolean),members:toArr(v.members).map(normM).filter(Boolean)};}
 function sv(){const snap=JSON.parse(JSON.stringify(D));if(db){_saving=true;setSS('saving');db.ref('club').set(snap).then(()=>{_saving=false;setSS('ok');}).catch(()=>{_saving=false;setSS('error');});}else{try{localStorage.setItem('bm_club_v2',JSON.stringify(snap));}catch(e){}}}
 function ld(){if(db){setSS('connecting');db.ref('club').on('value',snap=>{if(_saving)return;const v=snap.val();if(v&&(v.members||v.months)){D=normD(v);if(!D.months.find(m=>m.key===R.cm))R.cm=D.months[D.months.length-1]?.key||R.cm;if(!R._ri){initVR();R._ri=true;}}else{D=JSON.parse(JSON.stringify(INIT));db.ref('club').set(JSON.parse(JSON.stringify(INIT)));}setSS('ok');render();});db.ref('.info/connected').on('value',s=>{if(!s.val())setSS('offline');});}else{try{const r=localStorage.getItem('bm_club_v2');if(r){D=normD(JSON.parse(r));return;}}catch(e){}D=JSON.parse(JSON.stringify(INIT));}}
@@ -409,7 +409,7 @@ function inPlan(m,k){if(!m.plan||m.plan.type!=='선납')return false;return(m.pl
 function isPaid(m,k){if(m.exempt)return true;if(isNA(m,k))return true;if(m.lateKeys&&(m.lateKeys[k]||Object.values(m.lateKeys).includes(k)))return true;if(inPlan(m,k))return true;return!!m.pay[k];}
 function getFee(m,k){if(m.exempt)return 0;if(m.amt&&m.amt[k]!=null)return m.amt[k];if(m.plan&&m.plan.type==='선납'){const ranges=m.plan.ranges||[{start:m.plan.start,end:m.plan.end,amount:m.plan.amount}];for(const r of ranges)if(k===r.start&&r.amount>0)return r.amount;}if(m.lateKeys&&Object.values(m.lateKeys).includes(k)){const base=m.memberFee||(D.months.find(x=>x.key===k)?.fee||5000);return base*(Object.keys(m.lateKeys).filter(x=>m.lateKeys[x]===k).length+1);}return m.memberFee||(D.months.find(x=>x.key===k)?.fee||5000);}
 function planPos(m,k){if(!m.plan||m.plan.type!=='선납')return null;const vis=D.months.filter(x=>!R.hiddenCols.has(x.key)).map(x=>x.key);for(const r of(m.plan.ranges||[{start:m.plan.start,end:m.plan.end}])){if(k<r.start||k>r.end)continue;const vir=vis.filter(v=>v>=r.start&&v<=r.end);if(!vir.length)return null;const isS=k===vir[0],isE=k===vir[vir.length-1];return vir.length===1?'solo':isS?'start':isE?'end':'mid';}return null;}
-function latePos(m,k){if(!m.lateKeys)return null;const isPayK=Object.values(m.lateKeys).includes(k);const isMissK=!!m.lateKeys[k];if(!isPayK&&!isMissK)return null;const payK=isMissK?m.lateKeys[k]:k;const vis=D.months.filter(x=>!R.hiddenCols.has(x.key)).map(x=>x.key);const missKeys=Object.keys(m.lateKeys).filter(x=>m.lateKeys[x]===payK).sort().filter(x=>vis.includes(x));const allKeys=[...missKeys,payK].filter(x=>vis.includes(x));if(allKeys.length===1)return'late-solo';const isFirst=k===allKeys[0],isLast=k===allKeys[allKeys.length-1];if(isPayK)return isFirst?'late-solo':'late-end';return isFirst?'late-start':'late-mid';}
+function latePos(m,k){if(!m.lateKeys)return null;const isPayK=Object.values(m.lateKeys).includes(k);const isMissK=!!m.lateKeys[k];if(!isPayK&&!isMissK)return null;const payK=isMissK?m.lateKeys[k]:k;const vis=D.months.filter(x=>!R.hiddenCols.has(x.key)).map(x=>x.key);const missKeys=Object.keys(m.lateKeys).filter(x=>m.lateKeys[x]===payK).sort().filter(x=>vis.includes(x));const allKeys=[...missKeys,payK].filter((v,i,a)=>a.indexOf(v)===i).sort().filter(x=>vis.includes(x));if(!allKeys.length)return null;const isPrePay=payK===allKeys[0];const pfx=isPrePay?'pre':'late';if(allKeys.length===1)return pfx+'-solo';const isFirst=k===allKeys[0];if(isPayK)return isFirst?(pfx+'-solo'):(pfx+'-end');return isFirst?(pfx+'-start'):(pfx+'-mid');}
 const REL_ORDER={'배우자':0,'자녀':1,'부모':2,'형제/자매':3};
 function setMode(v){R.mode=v;['def','alpha','fam'].forEach(k=>document.getElementById('ms-'+k).classList.toggle('on',k===v));render();}
 function pickHead(grp){const ldr=grp.find(m=>m.fgLeader);if(ldr)return{head:ldr,subs:grp.filter(m=>m.id!==ldr.id).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9))};const s=[...grp].sort((a,b)=>a.id-b.id);return{head:s[0],subs:s.slice(1).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9))};}
@@ -422,8 +422,10 @@ function render(){
   const official=D.members.filter(m=>m.role!=='미성년');
   const male=official.filter(m=>m.g==='남').length;
   const ne=official.filter(m=>!m.exempt);
+  const admPaid=official.filter(m=>m.exempt&&ROLES[m.role]!==undefined&&m.pay&&m.pay[R.cm]);
   const paid=ne.filter(m=>isPaid(m,R.cm)).length;
-  const pamt=ne.filter(m=>isPaid(m,R.cm)).reduce((s,m)=>s+getFee(m,R.cm),0);
+  const pamt=ne.filter(m=>isPaid(m,R.cm)).reduce((s,m)=>s+getFee(m,R.cm),0)
+    +admPaid.reduce((s,m)=>s+(m.memberFee||(D.months.find(x=>x.key===R.cm)?.fee||5000)),0);
   document.getElementById('stats').innerHTML=`<div class="sc"><div class="sl">총 회원</div><div class="sv b">${official.length}명</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">톡방 인원 ${official.length+2}명</div></div><div class="sc"><div class="sl">남 / 여</div><div class="sv" style="font-size:16px">${male} / ${official.length-male}</div></div><div class="sc"><div class="sl">${cm.label} 납부</div><div class="sv g">${paid}명</div></div><div class="sc"><div class="sl">${cm.label} 미납</div><div class="sv r">${ne.length-paid}명</div></div><div class="sc"><div class="sl">${cm.label} 수납액</div><div class="sv yw" style="font-size:14px">${pamt.toLocaleString()}원</div></div>`;
   document.getElementById('mtabs').innerHTML=D.months.map(m=>`<button class="mtab${m.key===R.cm?' on':''}" onclick="R.cm='${m.key}';render()">${m.label}</button>`).join('')+`<button class="mtab-add" onclick="openMoM()">+ 월 추가</button>`;
   document.getElementById('ubtn').classList.toggle('on',R.fu);
@@ -432,7 +434,7 @@ function render(){
   const hB=fv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key<fv):[];
   const hA=lv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>lv):[];
   const tots={},pcnt={};
-  vis.forEach(mo=>{tots[mo.key]=D.members.filter(m=>!m.exempt&&isPaid(m,mo.key)).reduce((s,m)=>s+getFee(m,mo.key),0);pcnt[mo.key]=D.members.filter(m=>!m.exempt&&isPaid(m,mo.key)).length;});
+  vis.forEach(mo=>{tots[mo.key]=D.members.filter(m=>(!m.exempt&&isPaid(m,mo.key))||(m.exempt&&ROLES[m.role]!==undefined&&m.pay&&m.pay[mo.key])).reduce((s,m)=>s+(m.exempt?( m.memberFee||(D.months.find(x=>x.key===mo.key)?.fee||5000)):getFee(m,mo.key)),0);pcnt[mo.key]=D.members.filter(m=>(!m.exempt&&isPaid(m,mo.key))||(m.exempt&&ROLES[m.role]!==undefined&&m.pay&&m.pay[mo.key])).length;});
   const ps=`background:white;border:1.5px solid #c7d2fe;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;font-weight:700;color:var(--b);vertical-align:middle;flex-shrink:0`;
   const prevB=hB.length?`<span style="${ps};margin-right:3px" onclick="event.stopPropagation();showPrev()" title="${hB[hB.length-1].label}">◀</span>`:'';
   const nextB=hA.length?`<span style="${ps};margin-left:3px" onclick="event.stopPropagation();showNext()" title="${hA[0].label}">▶</span>`:'';
@@ -463,12 +465,23 @@ function render(){
     else{ni=`<span style="font-weight:${isAdm?600:400};flex:1;min-width:0">${m.name}${star}${isAdm?`<span class="rb rb-adm">${m.role}</span>`:m.role==='미성년'?'<span class="rb rb-minor">미성년</span>':''}${m.fgId&&!isSub?'<span style="font-size:10px;color:var(--tx3);margin-left:2px">👨‍👩</span>':''}</span>${yr}${gb}`;}
     const pcells=vis.map((mo,i)=>{
       const gap=i>0?gTd(vis[i-1].key,mo.key):'';const cc=mo.key===now?' td-cur':'';
+      if(isAdm&&!m.plan){// 운영진 자발납부: —→납부→미납→— 순환
+        const isMiss=!!(m.admMiss&&m.admMiss[mo.key]);
+        const isPd=!!m.pay[mo.key];
+        const admFee=m.memberFee||(D.months.find(x=>x.key===mo.key)?.fee||5000);
+        let admInner,admClk='';
+        if(isPd){admInner=`<span class="pv pv-ok">${admFee.toLocaleString()}</span>`;admClk=`onclick="admCellClick(${m.id},'${mo.key}')"` ;}
+        else if(isMiss){admInner=`<span class="pv pv-no">미납</span>`;admClk=`onclick="admCellClick(${m.id},'${mo.key}')"` ;}
+        else{admInner=`<span class="pv-dash">—</span>`;admClk=`onclick="admCellClick(${m.id},'${mo.key}')"` ;}
+        return gap+`<td class="pcell${cc}" ${admClk} style="min-width:86px;width:86px"><div style="display:flex;align-items:center;justify-content:center;height:100%;position:relative">${admInner}</div></td>`;
+      }
       if(isEx)return gap+`<td style="text-align:center"><span class="pv-dash">—</span></td>`;
       if(isNA(m,mo.key))return gap+`<td style="text-align:center"><span class="pv-dash">—</span></td>`;
       const isFut=mo.key>now,pd=isPaid(m,mo.key),fee=getFee(m,mo.key);
       const pp=planPos(m,mo.key),lp=latePos(m,mo.key);
       const afterPl=m.plan&&m.plan.type==='선납'&&(()=>{const maxE=(m.plan.ranges||[{end:m.plan.end}]).reduce((mx,r)=>r.end>mx?r.end:mx,'');return mo.key>maxE;})();
-      if((isFut&&!m.plan&&!m.pay[mo.key])||(afterPl&&!m.pay[mo.key]))return gap+`<td style="text-align:center"><span class="pv-dash">—</span></td>`;
+      // 선납 종료 이후 달은 미래달만 — 처리, 과거/현재달은 미납으로 표시
+      if((isFut&&!m.plan&&!m.pay[mo.key]&&!(m.lateKeys&&(m.lateKeys[mo.key]||Object.values(m.lateKeys).includes(mo.key))))||(afterPl&&isFut&&!m.pay[mo.key]&&!(m.lateKeys&&(m.lateKeys[mo.key]||Object.values(m.lateKeys).includes(mo.key)))))return gap+`<td style="text-align:center"><span class="pv-dash">—</span></td>`;
       let inner='';
       if(pp==='solo')inner=`<span class="pill-solo">${fee>0?fee.toLocaleString():''}<span class="plb">선납</span></span>`;
       else if(pp==='start')inner=`<span class="pill-s">${fee>0?fee.toLocaleString():''}<span class="plb">선납</span></span>`;
@@ -478,6 +491,10 @@ function render(){
       else if(lp==='late-start')inner=`<span class="pill-late-s">후납</span>`;
       else if(lp==='late-mid')inner=`<span class="pill-late-m">후납</span>`;
       else if(lp==='late-end')inner=`<span class="pill-late-e">${fee.toLocaleString()}<span class="plb-late">후납</span></span>`;
+      else if(lp==='pre-solo')inner=`<span class="pill-pre-solo">${fee.toLocaleString()}<span class="plb-late">선납</span></span>`;
+      else if(lp==='pre-start')inner=`<span class="pill-pre-s">${fee.toLocaleString()}<span class="plb-late">선납</span></span>`;
+      else if(lp==='pre-mid')inner=`<span class="pill-pre-m">선납</span>`;
+      else if(lp==='pre-end')inner=`<span class="pill-pre-e">선납</span>`;
       else if(isFut&&!pd)inner=`<span class="pv-dash">—</span>`;
       else if(pd)inner=`<span class="pv pv-ok">${fee.toLocaleString()}</span>`;
       else inner=`<span class="pv pv-no">미납</span>`;
@@ -485,13 +502,14 @@ function render(){
       if(!locked&&!lp){if(pd)clk=`onclick="cancelPay(${m.id},'${mo.key}')"`;else clk=`onclick="doPay(${m.id},'${mo.key}')"` ;}
       return gap+`<td class="pcell${cc}" ${clk} style="min-width:86px;width:86px"><div style="display:flex;align-items:center;justify-content:center;height:100%;position:relative">${inner}</div></td>`;
     }).join('');
-    return`<tr class="${rCls}${actCls}" ondblclick="openEM(${m.id})" style="cursor:pointer"><td style="min-width:180px;width:180px"><div class="name-cell">${ni}</div></td>${pcells}<td style="text-align:center;padding:0 2px;white-space:nowrap;width:36px;min-width:36px">${isEx?'':`<button class="tbtn" onclick="openPM(${m.id})" style="padding:3px 6px;font-size:11px;color:var(--yw)">💰</button>`}</td></tr>`;
+    return`<tr class="${rCls}${actCls}" style="cursor:pointer"><td style="min-width:180px;width:180px" ondblclick="openEM(${m.id})"><div class="name-cell">${ni}</div></td>${pcells}<td style="text-align:center;padding:0 2px;white-space:nowrap;width:36px;min-width:36px">${(isEx&&!isAdm)?'':`<button class="tbtn" onclick="openPM(${m.id})" style="padding:3px 6px;font-size:11px;color:var(--yw)">💰</button>`}</td></tr>`;
   }).join('');
   document.getElementById('tb').innerHTML=trs||`<tr><td colspan="${cN}" class="empty">회원 없음</td></tr>`;
 
   // 헤더-바디 열너비 동기화 + 가로 스크롤 연동
   syncHeadWidths();
-  bd.onscroll=()=>{hd.scrollLeft=bd.scrollLeft;};
+  const _bd=document.getElementById('tw-body'),_hd=document.getElementById('tw-head');
+  if(_bd&&_hd)_bd.onscroll=()=>{_hd.scrollLeft=_bd.scrollLeft;};
 
   renderUnpaid(cm);
 }
@@ -499,7 +517,12 @@ function countGaps(vis){let c=0;for(let i=1;i<vis.length;i++){if(D.months.some(m
 function renderUnpaid(cm){if(!cm)cm=D.months.find(x=>x.key===R.cm);if(!cm)return;const unpaid=D.members.filter(m=>!m.exempt&&m.role!=='미성년'&&!isPaid(m,cm.key));const txt=unpaid.length?`[${cm.label} 회비 미납 안내]\n\n${unpaid.map(m=>m.name).join(', ')} 님,\n이번 달 회비 납부 부탁드립니다 🏸`:`✅ ${cm.label} 전원 납부 완료!`;document.getElementById('ubox').innerHTML=`<div class="ut">⚠️ ${cm.label} 미납자 확인</div><div style="margin-bottom:8px;font-size:12px;color:var(--tx2)">${cm.label} 미납 <strong style="color:var(--r)">${unpaid.length}명</strong></div><div class="chips">${unpaid.length?unpaid.map(m=>`<span class="chip">${m.name}</span>`).join(''):`<span class="ok-chip">✅ ${cm.label} 전원 납부 완료!</span>`}</div><div class="kbox" id="kbox" contenteditable="true">${txt.replace(/\n/g,'<br>')}</div><div class="krow"><span class="knote">카카오톡에 바로 붙여넣기</span><button class="kbtn" id="copybtn" onclick="copyKakao()">📋 복사</button></div>`;}
 function copyKakao(){navigator.clipboard.writeText(document.getElementById('kbox').innerText).then(()=>{const b=document.getElementById('copybtn');b.textContent='✅ 복사됨!';b.classList.add('copied');setTimeout(()=>{b.textContent='📋 복사';b.classList.remove('copied');},2000);});}
 function renderW(){const list=document.getElementById('wlist');if(!D.withdrawn.length){list.innerHTML='<div class="empty">탈퇴 회원이 없습니다.</div>';return;}const byY={};D.withdrawn.forEach(m=>{const y=m.wdate?m.wdate.substring(0,4):m.wdUnknown?'날짜모름':'미기록';(byY[y]=byY[y]||[]).push(m);});list.innerHTML=`<div class="w-stats"><div class="w-stat">전체 <strong>${D.withdrawn.length}명</strong></div><div class="w-stat">날짜기록 <strong>${D.withdrawn.filter(m=>m.wdate).length}명</strong></div></div>`+Object.keys(byY).sort((a,b)=>b.localeCompare(a)).map(y=>`<div style="font-size:11px;font-weight:700;color:var(--tx3);letter-spacing:2px;margin:14px 0 6px">${y==='날짜모름'||y==='미기록'?'📂 '+y:'📅 '+y+'년 탈퇴'}</div>${byY[y].map(m=>`<div class="wcard"><div class="wcard-top"><div style="flex:1"><div class="wn">${m.name} <span class="gb ${m.g==='남'?'gm':'gf'}">${m.g}</span> <span style="font-size:11px;color:var(--tx3)">${m.year}년생</span></div><div class="wd">${m.wdUnknown?'탈퇴일: 모름':m.wdate?'탈퇴일: '+m.wdate:'탈퇴일: 미기록'}</div></div><div class="wbtns"><button class="wbtn" onclick="openEditWd(${m.id})">✏️</button><button class="wbtn restore" onclick="restoreM(${m.id})">복구</button><button class="wbtn del" onclick="permDel(${m.id})">영구삭제</button></div></div>${m.wdNote?`<div class="wnote">💬 ${m.wdNote}</div>`:''}</div>`).join('')}`).join('');}
-function doPay(id,key){const m=D.members.find(x=>x.id===id);if(!m)return;if(m.plan&&m.plan.type==='선납')return;m.pay[key]=true;if(m.fgId){D.members.filter(x=>x.fgId===m.fgId&&x.id!==id&&!isPaid(x,key)).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9)).forEach(fm=>{if(confirm(`${fm.name}님도 납부 처리할까요?`))fm.pay[key]=true;});}sv();render();}
+function admCellClick(id,key){const m=D.members.find(x=>x.id===id);if(!m)return;// 순환: —(없음) → 납부 → 미납 → —
+const cur=m.pay[key];const hasMiss=m.admMiss&&m.admMiss[key];if(cur===true&&!hasMiss){// 납부 → 미납
+if(!m.admMiss)m.admMiss={};m.admMiss[key]=true;delete m.pay[key];}else if(!cur&&hasMiss){// 미납 → —
+delete m.admMiss[key];}else if(!cur&&!hasMiss){// — → 납부
+m.pay[key]=true;}sv();render();}
+function doPay(id,key){const m=D.members.find(x=>x.id===id);if(!m)return;if(m.plan&&m.plan.type==='선납'&&inPlan(m,key))return;m.pay[key]=true;if(m.fgId){D.members.filter(x=>x.fgId===m.fgId&&x.id!==id&&!isPaid(x,key)).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9)).forEach(fm=>{if(confirm(`${fm.name}님도 납부 처리할까요?`))fm.pay[key]=true;});}sv();render();}
 function cancelPay(id,key){const m=D.members.find(x=>x.id===id);if(!m)return;delete m.pay[key];if(m.amt)delete m.amt[key];sv();render();}
 function toggleCol(k){if(!R.hiddenCols.has(k)){R.hiddenCols.add(k);render();}}
 function showPrev(){const vis=D.months.filter(m=>!R.hiddenCols.has(m.key));const fv=vis[0]?.key;const b=fv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key<fv):[];if(b.length){R.hiddenCols.delete(b[b.length-1].key);render();}}
@@ -507,18 +530,96 @@ function showNext(){const vis=D.months.filter(m=>!R.hiddenCols.has(m.key));const
 function revealBetween(ak,bk){const b=D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>ak&&m.key<bk);if(b.length){R.hiddenCols.delete(b[0].key);render();}}
 function onFamSel(){const v=!!document.getElementById('ffm').value;document.getElementById('ffrw').style.display=v?'':'none';document.getElementById('ffleader-row').style.display=v?'':'none';}
 function openMM(){EID=null;document.getElementById('mm-t').textContent='👤 회원 추가';document.getElementById('mm-s').textContent='추가';document.getElementById('mm-danger').style.display='none';['fn','fy','fm','frc','f-fee','f-start'].forEach(id=>document.getElementById(id).value='');document.getElementById('ffleader').checked=false;document.getElementById('fg2').value='남';document.getElementById('fr').value='일반';document.getElementById('frcw').style.display='none';fillFamDrop(null,null,null);document.getElementById('mm').classList.add('on');setTimeout(()=>document.getElementById('fn').focus(),100);}
-function openEM(id){const m=D.members.find(x=>x.id===id);if(!m)return;ACTIVE_ID=id;render();EID=id;document.getElementById('mm-t').textContent='✏️ 회원 정보 수정';document.getElementById('mm-s').textContent='저장';document.getElementById('mm-danger').style.setProperty('display','flex');document.getElementById('fn').value=m.name;document.getElementById('fy').value=m.year;document.getElementById('fg2').value=m.g;const std=['운영진','부운영진','일반','미성년'];if(std.includes(m.role)){document.getElementById('fr').value=m.role;document.getElementById('frcw').style.display='none';}else{document.getElementById('fr').value='기타';document.getElementById('frc').value=m.role;document.getElementById('frcw').style.display='';}document.getElementById('fm').value=m.memo||'';document.getElementById('f-fee').value=m.memberFee||'';document.getElementById('f-start').value=m.startMonth||'';const spId=m.fgId?D.members.find(x=>x.fgId===m.fgId&&x.id!==id)?.id:null;fillFamDrop(id,spId,m.fgRel||'배우자',m.fgLeader);document.getElementById('mm').classList.add('on');}
+function openEM(id){const m=D.members.find(x=>x.id===id);if(!m)return;ACTIVE_ID=id;EID=id;document.getElementById('mm-t').textContent='✏️ 회원 정보 수정';document.getElementById('mm-s').textContent='저장';document.getElementById('mm-danger').style.setProperty('display','flex');document.getElementById('fn').value=m.name;document.getElementById('fy').value=m.year;document.getElementById('fg2').value=m.g;const std=['운영진','부운영진','일반','미성년'];if(std.includes(m.role)){document.getElementById('fr').value=m.role;document.getElementById('frcw').style.display='none';}else{document.getElementById('fr').value='기타';document.getElementById('frc').value=m.role;document.getElementById('frcw').style.display='';}document.getElementById('fm').value=m.memo||'';document.getElementById('f-fee').value=m.memberFee||'';document.getElementById('f-start').value=m.startMonth||'';const spId=m.fgId?D.members.find(x=>x.fgId===m.fgId&&x.id!==id)?.id:null;fillFamDrop(id,spId,m.fgRel||'배우자',m.fgLeader);document.getElementById('mm').classList.add('on');}
 function fillFamDrop(exId,curId,curRel,curLeader){const sel=document.getElementById('ffm');sel.innerHTML='<option value="">연결 안 함</option>';D.members.filter(m=>m.id!==exId).forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=`${m.name} (${m.role})`;sel.appendChild(o);});sel.value=curId||'';const sv2=!!curId;document.getElementById('ffrw').style.display=sv2?'':'none';document.getElementById('ffleader-row').style.display=sv2?'':'none';if(curRel)document.getElementById('ffr').value=curRel;if(curLeader!==undefined)document.getElementById('ffleader').checked=!!curLeader;}
 function saveMember(){const name=document.getElementById('fn').value.trim();if(!name){alert('이름을 입력해주세요.');return;}const year=parseInt(document.getElementById('fy').value)||1990,g=document.getElementById('fg2').value;let role=document.getElementById('fr').value;if(role==='기타')role=document.getElementById('frc').value.trim()||'기타';const memo=document.getElementById('fm').value.trim(),famSel=document.getElementById('ffm').value,famRel=document.getElementById('ffr').value;if(role==='미성년'&&!famSel){alert('미성년 회원은 보호자를 반드시 연결해야 합니다.');return;}const mFee=parseInt(document.getElementById('f-fee').value)||null,sMo=document.getElementById('f-start').value||null,isLdr=document.getElementById('ffleader').checked;if(EID){const m=D.members.find(x=>x.id===EID);Object.assign(m,{name,year,g,role,memo,memberFee:mFee,startMonth:sMo});if(famSel){const t=D.members.find(x=>x.id==famSel);if(t){const fg=t.fgId||('fg_'+Date.now());t.fgId=fg;if(!t.fgRel)t.fgRel=famRel;m.fgId=fg;m.fgRel=famRel;if(isLdr){D.members.filter(x=>x.fgId===fg).forEach(x=>{x.fgLeader=false;});m.fgLeader=true;}else m.fgLeader=false;}}else{m.fgId=null;m.fgRel='';m.fgLeader=false;}}else{const id=Date.now();let fgId=null,fgRel='';if(famSel){const t=D.members.find(x=>x.id==famSel);if(t){fgId=t.fgId||('fg_'+Date.now());t.fgId=fgId;if(!t.fgRel)t.fgRel=famRel;fgRel=famRel;if(isLdr)D.members.filter(x=>x.fgId===fgId).forEach(x=>{x.fgLeader=false;});}}D.members.push({id,name,year,g,role,fgId,fgRel,fgLeader:isLdr,pay:{},amt:{},plan:null,memo,memberFee:mFee,startMonth:sMo});}sv();closeOv('mm');render();}
 function deleteMember(){const m=D.members.find(x=>x.id===EID);if(!m||!confirm(`'${m.name}' 회원을 삭제할까요?`))return;D.members=D.members.filter(x=>x.id!==EID);sv();closeOv('mm');render();}
 function openWdFromEdit(){closeOv('mm');openWM(EID);}
-function openPM(id){PMI=id;ACTIVE_ID=id;render();const m=D.members.find(x=>x.id===id);if(!m)return;document.getElementById('pl-name').textContent=m.name;setPT(null,m.plan?.type==='완납'?'선납':(m.plan?.type||'월납'));document.getElementById('plm').classList.add('on');}
-function setPT(el,type){PT=type||el?.dataset.pt||'월납';document.querySelectorAll('.ptab').forEach(b=>b.classList.toggle('on',b.dataset.pt===PT));const m=D.members.find(x=>x.id===PMI);let h='';if(PT==='후납'){h=`<div class="fg"><label>밀린 달</label><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">${D.months.map(mo=>{const lk=m?.lateKeys&&m.lateKeys[mo.key],un=!isPaid(m,mo.key)&&!isNA(m,mo.key);if(!un&&!lk)return'';return`<label style="display:flex;align-items:center;gap:4px;cursor:pointer;background:#f5f3ff;border-radius:6px;padding:4px 8px;font-size:12px"><input type="checkbox" class="late-chk" value="${mo.key}" ${lk?'checked':''}> ${mo.label}</label>`;}).join('')}</div></div><div class="fg"><label>납부한 달</label><select class="fi" id="late-pay"><option value="">선택...</option>${D.months.filter(mo=>!isNA(m,mo.key)).map(mo=>`<option value="${mo.key}">${mo.label}</option>`).join('')}</select></div><div class="info-box" style="font-size:11px">밀린 달 선택 후 실제로 납부한 달을 지정하세요.</div>`;}else if(PT==='선납'){const ep=m?.plan?.type==='선납'?m.plan:null;const ers=ep?.ranges||(ep?[{start:ep.start,end:ep.end,amount:ep.amount,late:false}]:[]);const rh=ers.length?ers.map((r,i)=>rRow(r,i)).join(''):rRow({start:'',end:'',amount:'',late:false},0);h=`<div id="plan-ranges">${rh}</div><button type="button" onclick="addRange()" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1.5px dashed var(--bd);background:white;color:var(--b);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">+ 구간 추가</button>`;}else{h=`<div class="info-box">매월 개별 납부로 처리됩니다.</div>`;}document.getElementById('pl-detail').innerHTML=h;}
+function openPM(id){PMI=id;ACTIVE_ID=id;const m=D.members.find(x=>x.id===id);if(!m)return;document.getElementById('pl-name').textContent=m.name;const hasLate=m.lateKeys&&Object.keys(m.lateKeys).length>0;const initTab=hasLate?'부분납':(m.plan?.type==='완납'?'월납':(m.plan?.type||'월납'));setPT(null,initTab);document.getElementById('plm').classList.add('on');}
+function setPT(el,type){PT=type||el?.dataset.pt||'월납';document.querySelectorAll('.ptab').forEach(b=>b.classList.toggle('on',b.dataset.pt===PT));const m=D.members.find(x=>x.id===PMI);const addRow=document.getElementById('plm-add-row');let h='';
+if(PT==='부분납'){
+  if(addRow)addRow.style.display='';
+  // 기존 부분납 구간 목록 렌더
+  const groups={};// payKey → {missKeys[], payKey}
+  if(m?.lateKeys){Object.entries(m.lateKeys).forEach(([mk,pk])=>{if(!groups[pk])groups[pk]={payKey:pk,missKeys:[]};groups[pk].missKeys.push(mk);});}
+  const AM=['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
+  const ML={'2026-01':'1월','2026-02':'2월','2026-03':'3월','2026-04':'4월','2026-05':'5월','2026-06':'6월','2026-07':'7월','2026-08':'8월','2026-09':'9월','2026-10':'10월','2026-11':'11월','2026-12':'12월'};
+  let groupHtml='';
+  Object.values(groups).forEach((g,i)=>{
+    const missChks=AM.map(k=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;background:#f5f3ff;border-radius:5px;padding:3px 7px;font-size:11px"><input type="checkbox" class="pg-miss" data-gidx="${i}" value="${k}" ${g.missKeys.includes(k)?'checked':''}> ${ML[k]}</label>`).join('');
+    const payChks=AM.map(k=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;background:#eff6ff;border-radius:5px;padding:3px 7px;font-size:11px"><input type="radio" name="pg-pay-${i}" class="pg-pay" data-gidx="${i}" value="${k}" ${g.payKey===k?'checked':''}> ${ML[k]}</label>`).join('');
+    groupHtml+=`<div class="partial-group" data-gidx="${i}" style="border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:8px;background:#fafafa">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:12px;font-weight:700;color:var(--tx2)">부분납 구간 ${i+1}</span><button type="button" onclick="removePartialGroup(${i})" style="background:none;border:none;color:var(--r);cursor:pointer;font-size:14px;line-height:1">✕</button></div>
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">납부 처리할 달</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">${missChks}</div>
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">납부한 달 (1개)</div><div style="display:flex;flex-wrap:wrap;gap:4px">${payChks}</div>
+    </div>`;
+  });
+  h=`<div id="partial-groups">${groupHtml}</div><div class="info-box" style="font-size:11px;margin-top:4px">납부한 달이 앞이면 선납, 뒤면 후납으로 자동 표기돼요.</div>`;
+}else{
+  if(addRow)addRow.style.display='none';
+  h=`<div class="info-box">매월 개별 납부로 처리됩니다.</div>`;
+}
+document.getElementById('pl-detail').innerHTML=h;}
+function addPartial(){
+  const AM=['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'];
+  const ML={'2026-01':'1월','2026-02':'2월','2026-03':'3월','2026-04':'4월','2026-05':'5월','2026-06':'6월','2026-07':'7월','2026-08':'8월','2026-09':'9월','2026-10':'10월','2026-11':'11월','2026-12':'12월'};
+  const pg=document.getElementById('partial-groups');if(!pg)return;
+  const i=pg.querySelectorAll('.partial-group').length;
+  const missChks=AM.map(k=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;background:#f5f3ff;border-radius:5px;padding:3px 7px;font-size:11px"><input type="checkbox" class="pg-miss" data-gidx="${i}" value="${k}"> ${ML[k]}</label>`).join('');
+  const payChks=AM.map(k=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;background:#eff6ff;border-radius:5px;padding:3px 7px;font-size:11px"><input type="radio" name="pg-pay-${i}" class="pg-pay" data-gidx="${i}" value="${k}"> ${ML[k]}</label>`).join('');
+  const div=document.createElement('div');
+  div.className='partial-group';div.dataset.gidx=i;
+  div.style.cssText='border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:8px;background:#fafafa';
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:12px;font-weight:700;color:var(--tx2)">부분납 구간 ${i+1}</span><button type="button" onclick="this.closest('.partial-group').remove();renumberGroups()" style="background:none;border:none;color:var(--r);cursor:pointer;font-size:14px;line-height:1">✕</button></div><div style="font-size:10px;color:var(--tx2);margin-bottom:4px">납부 처리할 달</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">${missChks}</div><div style="font-size:10px;color:var(--tx2);margin-bottom:4px">납부한 달 (1개)</div><div style="display:flex;flex-wrap:wrap;gap:4px">${payChks}</div>`;
+  pg.appendChild(div);
+}
+function removePartialGroup(idx){
+  const pg=document.getElementById('partial-groups');if(!pg)return;
+  const groups=pg.querySelectorAll('.partial-group');
+  if(groups[idx])groups[idx].remove();
+  renumberGroups();
+}
+function renumberGroups(){
+  const pg=document.getElementById('partial-groups');if(!pg)return;
+  pg.querySelectorAll('.partial-group').forEach((g,i)=>{
+    g.dataset.gidx=i;
+    const title=g.querySelector('span');if(title)title.textContent=`부분납 구간 ${i+1}`;
+    g.querySelectorAll('.pg-miss').forEach(el=>el.dataset.gidx=i);
+    g.querySelectorAll('.pg-pay').forEach(el=>{el.dataset.gidx=i;el.name=`pg-pay-${i}`;});
+    const xBtn=g.querySelector('button');if(xBtn)xBtn.setAttribute('onclick',`removePartialGroup(${i})`);
+  });
+}
+
 function rRow(r,i){const lN=!r.late?'#4f46e5':'var(--bd)',lY=r.late?'#4f46e5':'var(--bd)';const bN=!r.late?'#eef2ff':'white',bY=r.late?'#eef2ff':'white';const cN=!r.late?'#4f46e5':'var(--tx2)',cY=r.late?'#4f46e5':'var(--tx2)';return`<div class="range-row"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:11px;font-weight:700;color:var(--tx2)">구간 ${i+1}</span><button type="button" onclick="rmRange(this)" style="background:none;border:none;color:var(--r);cursor:pointer;font-size:13px">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><div><label style="font-size:10px;color:var(--tx2);display:block;margin-bottom:3px">시작 월</label><input class="fi pr-s" type="month" value="${r.start||''}"></div><div><label style="font-size:10px;color:var(--tx2);display:block;margin-bottom:3px">종료 월</label><input class="fi pr-e" type="month" value="${r.end||''}"></div></div><div style="margin-bottom:8px"><label style="font-size:10px;color:var(--tx2);display:block;margin-bottom:3px">납부 금액 (원)</label><input class="fi pr-a" type="number" value="${r.amount||''}" placeholder="예: 15000"></div><div style="display:flex;gap:6px"><button type="button" onclick="tgLate(this,false)" style="flex:1;padding:6px;border-radius:6px;border:1.5px solid ${lN};background:${bN};color:${cN};font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">선납</button><button type="button" onclick="tgLate(this,true)" style="flex:1;padding:6px;border-radius:6px;border:1.5px solid ${lY};background:${bY};color:${cY};font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">후납</button></div><input type="hidden" class="pr-late" value="${r.late||false}"></div>`;}
 function addRange(){const c=document.getElementById('plan-ranges');if(!c)return;const d=document.createElement('div');d.innerHTML=rRow({start:'',end:'',amount:'',late:false},c.querySelectorAll('.range-row').length);c.appendChild(d.firstChild);}
 function rmRange(btn){btn.closest('.range-row').remove();document.querySelectorAll('.range-row').forEach((r,i)=>{const l=r.querySelector('span');if(l)l.textContent='구간 '+(i+1);});}
 function tgLate(btn,val){const row=btn.closest('.range-row');row.querySelector('.pr-late').value=val;row.querySelectorAll('button[onclick*="tgLate"]').forEach(b=>{const on=b===btn;b.style.borderColor=on?'#4f46e5':'var(--bd)';b.style.background=on?'#eef2ff':'white';b.style.color=on?'#4f46e5':'var(--tx2)';});}
-function savePlan(){const m=D.members.find(x=>x.id===PMI);if(!m)return;if(PT==='후납'){const payM=document.getElementById('late-pay')?.value;if(!payM){alert('납부한 달을 선택해주세요.');return;}const chks=document.querySelectorAll('.late-chk:checked');if(!chks.length){alert('밀린 달을 선택해주세요.');return;}if(!m.lateKeys)m.lateKeys={};if(!m.amt)m.amt={};Object.keys(m.lateKeys).forEach(k=>{if(m.lateKeys[k]===payM)delete m.lateKeys[k];});chks.forEach(c=>{m.lateKeys[c.value]=payM;m.pay[c.value]=true;});m.pay[payM]=true;m.amt[payM]=(m.memberFee||5000)*(Object.keys(m.lateKeys).filter(k=>m.lateKeys[k]===payM).length+1);closeOv('plm');sv();render();return;}else if(PT==='선납'){const rows=[];document.querySelectorAll('.range-row').forEach(row=>{const s=row.querySelector('.pr-s')?.value,e=row.querySelector('.pr-e')?.value;const a=parseInt(row.querySelector('.pr-a')?.value)||0,late=row.querySelector('.pr-late')?.value==='true';if(s&&e)rows.push({start:s,end:e,amount:a,late});});if(!rows.length)return;rows.sort((a,b)=>a.start.localeCompare(b.start));m.plan={type:'선납',ranges:rows,start:rows[0].start,end:rows[rows.length-1].end,amount:rows[0].amount,late:rows[0].late};rows.forEach(r=>{let d=new Date(r.start+'-01'),ed=new Date(r.end+'-01');while(d<=ed){const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;m.pay[k]=true;d=new Date(d.getFullYear(),d.getMonth()+1,1);}});}else{m.plan={type:'월납'};}sv();closeOv('plm');render();}
+function savePlan(){const m=D.members.find(x=>x.id===PMI);if(!m)return;
+if(PT==='부분납'){
+  // 기존 lateKeys/pay/amt 초기화
+  if(m.lateKeys){Object.keys(m.lateKeys).forEach(k=>{delete m.pay[k];});Object.values(m.lateKeys).forEach(k=>{if(m.amt)delete m.amt[k];delete m.pay[k];});}
+  m.lateKeys={};if(!m.amt)m.amt={};
+  const groups=document.querySelectorAll('.partial-group');
+  if(!groups.length){sv();closeOv('plm');render();return;}
+  let valid=true;
+  groups.forEach((g,i)=>{
+    const missKeys=[...g.querySelectorAll('.pg-miss:checked')].map(el=>el.value);
+    const payKey=g.querySelector('.pg-pay:checked')?.value||'';
+    if(!missKeys.length||!payKey){alert(`구간 ${i+1}: 납부 처리할 달과 납부한 달을 모두 선택해주세요.`);valid=false;return;}
+    missKeys.forEach(k=>{m.lateKeys[k]=payKey;m.pay[k]=true;});
+    m.pay[payKey]=true;
+    // 선납이면 payKey가 missKeys 중 가장 앞, 후납이면 가장 뒤 → amt는 후납 기준
+    const allKeys=[...missKeys,payKey].filter((v,i,a)=>a.indexOf(v)===i).sort();
+    const isLate=payKey===allKeys[allKeys.length-1];
+    if(isLate){m.amt[payKey]=(m.memberFee||5000)*(missKeys.length+1);}
+    else{m.amt[payKey]=(m.memberFee||5000)*allKeys.length;}
+  });
+  if(!valid)return;
+  sv();closeOv('plm');render();return;
+}
+// 월납
+if(m.plan&&m.plan.type==='선납'){const oldRanges=m.plan.ranges||[{start:m.plan.start,end:m.plan.end}];oldRanges.forEach(r=>{if(!r.start||!r.end)return;let d=new Date(r.start+'-01'),ed=new Date(r.end+'-01');while(d<=ed){const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;if(!m.amt||m.amt[k]==null)delete m.pay[k];d=new Date(d.getFullYear(),d.getMonth()+1,1);}});}
+m.plan={type:'월납'};sv();closeOv('plm');render();}
 function openWM(id){WMI=id;const m=D.members.find(x=>x.id===id);if(!m)return;document.getElementById('wd-info').textContent=`'${m.name}' 회원을 탈퇴 처리합니다.`;document.getElementById('wdd').value=new Date().toISOString().substring(0,10);document.getElementById('wdd').disabled=false;document.getElementById('wdd-unk').checked=false;document.getElementById('wdnote').value='';const act=document.getElementById('wd-action');act.textContent='탈퇴 처리';act.onclick=doWithdraw;document.getElementById('wdm').classList.add('on');}
 function openEditWd(id){const m=D.withdrawn.find(x=>x.id===id);if(!m)return;WMI=id;document.getElementById('wd-info').textContent=`'${m.name}' 탈퇴 정보 수정`;document.getElementById('wdd-unk').checked=!!m.wdUnknown;document.getElementById('wdd').value=m.wdate||'';document.getElementById('wdd').disabled=!!m.wdUnknown;document.getElementById('wdnote').value=m.wdNote||'';const act=document.getElementById('wd-action');act.textContent='수정 저장';act.onclick=()=>{const tgt=D.withdrawn.find(x=>x.id===WMI);if(!tgt)return;tgt.wdUnknown=document.getElementById('wdd-unk').checked;tgt.wdate=tgt.wdUnknown?null:(document.getElementById('wdd').value||null);tgt.wdNote=document.getElementById('wdnote').value.trim();sv();closeOv('wdm');renderW();};document.getElementById('wdm').classList.add('on');}
 function doWithdraw(){const m=D.members.find(x=>x.id===WMI);if(!m)return;m.wdUnknown=document.getElementById('wdd-unk').checked;m.wdate=m.wdUnknown?null:(document.getElementById('wdd').value||null);m.wdNote=document.getElementById('wdnote').value.trim();D.members=D.members.filter(x=>x.id!==WMI);D.withdrawn.push(m);sv();closeOv('wdm');render();}
