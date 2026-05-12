@@ -62,10 +62,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);
 .mseg:last-child{border-right:none}
 .mseg.on{background:#1e1b4b;color:white;font-weight:600}
 .tw-wrap{border:1px solid var(--bd);border-radius:var(--radius2);overflow-x:auto;margin-bottom:12px;background:white}
-.tw-head{border:1px solid var(--bd);border-bottom:none;border-radius:var(--radius2) var(--radius2) 0 0;overflow-x:hidden;background:white;position:sticky;top:52px;z-index:20}
-.tw-body{border:1px solid var(--bd);border-top:none;border-radius:0 0 var(--radius2) var(--radius2);overflow-x:auto;margin-bottom:12px;background:white}
+.tw-head{overflow-x:hidden;background:white;position:sticky;top:52px;z-index:20;border:1px solid var(--bd);border-bottom:2px solid var(--bd);border-radius:var(--radius2) var(--radius2) 0 0}
+.tw-body-wrap{overflow-x:auto;border:1px solid var(--bd);border-top:none;border-radius:0 0 var(--radius2) var(--radius2);margin-bottom:12px;background:white}
+.tw-body{background:white}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
-thead th{position:sticky;z-index:10;background:var(--sf2)}
+thead th{background:var(--sf2)}
 thead tr:first-child th{top:0}
 thead tr:nth-child(2) th{top:40px}
 th{padding:9px 10px;font-size:11px;font-weight:600;color:var(--tx2);border-bottom:1px solid var(--bd);border-right:1px solid #eaecf0;text-align:center;white-space:nowrap}
@@ -120,7 +121,7 @@ tr.row-active{outline:1.5px solid #4f46e5}
 .plb{display:inline-block;padding:0 4px;border-radius:10px;font-size:8px;font-weight:800;background:#fde68a;color:#78350f;letter-spacing:.3px;vertical-align:middle}
 .plb-late{display:inline-block;padding:0 4px;border-radius:10px;font-size:8px;font-weight:800;background:#7c3aed;color:#fff;letter-spacing:.3px;vertical-align:middle}.plb-part{display:inline-block;padding:0 4px;border-radius:10px;font-size:8px;font-weight:800;background:#64748b;color:#fff;letter-spacing:.3px;vertical-align:middle}
 .pill-s,.pill-m,.pill-e,.pill-solo{position:absolute;top:5px;bottom:5px;background:var(--yw2);color:#92400e;display:flex;align-items:center;font-size:12px;font-weight:600;white-space:nowrap;pointer-events:none}
-.pill-s{left:5px;right:-1px;border-radius:7px 0 0 7px;padding-left:8px;gap:4px}
+.pill-s{left:5px;right:-1px;border-radius:7px 0 0 7px;padding-left:8px;gap:4px;justify-content:center}
 .pill-m{left:-1px;right:-1px;border-radius:0;justify-content:center}
 .pill-e{left:-1px;right:5px;border-radius:0 7px 7px 0;justify-content:center}
 .pill-solo{left:5px;right:5px;border-radius:7px;padding:0 8px;gap:4px}
@@ -129,9 +130,9 @@ tr.row-active{outline:1.5px solid #4f46e5}
 .pill-late-m{left:-1px;right:-1px;border-radius:0;justify-content:center}
 .pill-late-e{left:-1px;right:5px;border-radius:0 7px 7px 0;justify-content:center;padding-right:8px;gap:4px}
 .pill-late-solo{left:5px;right:5px;border-radius:7px;padding:0 8px;gap:4px}
-.col-gap-th{width:20px!important;min-width:20px!important;padding:0!important;cursor:pointer;text-align:center;font-size:12px;font-weight:700;color:var(--b);border-right:1px solid #eaecf0}
-.col-gap-th:hover{background:#dbeafe!important}
-.col-gap-td{width:20px!important;min-width:20px!important;padding:0!important;border-right:1px solid #f0f2f7}
+.col-gap-th{width:28px!important;min-width:28px!important;padding:0!important;text-align:center;background:#f8fafc;border-left:2px solid #94a3b8;border-right:2px solid #94a3b8;cursor:pointer;font-size:9px;color:#64748b;white-space:nowrap;overflow:hidden}
+.col-gap-th:hover{background:#e0e7ff!important;color:#4f46e5}
+.col-gap-td{width:28px!important;min-width:28px!important;padding:0!important;background:#f8fafc;border-left:2px solid #e2e8f0;border-right:2px solid #e2e8f0}
 .ubox{background:white;border:1px solid var(--bd);border-radius:var(--radius2);padding:14px;margin-bottom:10px}
 .ut{font-size:12px;font-weight:700;color:var(--yw);margin-bottom:8px}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
@@ -223,10 +224,10 @@ select.fi{cursor:pointer}
           <button class="mseg" id="ms-alpha" onclick="setMode('alpha')">가나다순</button>
           <button class="mseg" id="ms-fam" onclick="setMode('fam')">가족구분</button>
         </div>
-        <button class="abtn" onclick="openMM()">+ 회원 추가</button>
+        <button class="abtn" onclick="openMM()" id="btn-add-member">+ 회원 추가</button>
       </div>
       <div class="tw-head" id="tw-head"><table id="head-tbl" style="width:100%;border-collapse:collapse;table-layout:fixed"><thead id="th"></thead></table></div>
-      <div class="tw-body" id="tw-body"><table id="body-tbl" style="width:100%;border-collapse:collapse;table-layout:fixed"><tbody id="tb"></tbody></table></div>
+      <div class="tw-body-wrap" id="tw-body-wrap"><div class="tw-body" id="tw-body"><table id="body-tbl" style="width:100%;border-collapse:collapse;table-layout:fixed"><tbody id="tb"></tbody></table></div></div>
       <div id="ubox" class="ubox"></div>
     </div>
     <div id="v-w" style="display:none"><div id="wlist"></div></div>
@@ -253,7 +254,7 @@ select.fi{cursor:pointer}
     </div>
   </div>
     <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:8px;align-items:end;margin-bottom:8px">
-    <div class="fg" style="margin:0"><label>전화번호</label><div style="display:flex;gap:5px;align-items:center"><input class="fi" id="f-tel" type="tel" placeholder="010-0000-0000" style="flex:1;min-width:0" oninput="const ca=document.getElementById('f-tel-call');const v=this.value.trim();if(v){ca.href='tel:'+v.replace(/[^0-9+]/g,'');ca.style.display='';}else{ca.style.display='none';}"><a id="f-tel-call" href="" style="display:none;padding:6px 8px;border-radius:8px;background:#22c55e;color:white;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">📞</a><button type="button" onclick="copyTel()" style="padding:6px 8px;border-radius:8px;border:1px solid var(--bd);background:white;font-size:12px;cursor:pointer;white-space:nowrap">복사</button></div></div>
+    <div class="fg" style="margin:0"><label>전화번호</label><div style="display:flex;gap:5px;align-items:center"><input class="fi" id="f-tel" type="text" inputmode="tel" placeholder="010-0000-0000" style="flex:1;min-width:0" oninput="let v=this.value.replace(/[^0-9]/g,'');if(v.length<=3)this.value=v;else if(v.length<=7)this.value=v.slice(0,3)+'-'+v.slice(3);else this.value=v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);const ca=document.getElementById('f-tel-call');const tv=this.value.trim();if(tv){ca.href='tel:'+tv.replace(/[^0-9+]/g,'');ca.style.display='';}else{ca.style.display='none';}"><a id="f-tel-call" href="" style="display:none;padding:6px 8px;border-radius:8px;background:#22c55e;color:white;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">📞</a><button type="button" onclick="copyTel()" style="padding:6px 8px;border-radius:8px;border:1px solid var(--bd);background:white;font-size:12px;cursor:pointer;white-space:nowrap">복사</button></div></div>
     <div class="fg" style="margin:0"><label>회원구분</label>
       <select class="fi" id="fr" onchange="document.getElementById('frcw').style.display=this.value==='기타'?'':`none`">
         <option value="운영진">운영진</option><option value="부운영진">부운영진</option>
@@ -321,7 +322,7 @@ select.fi{cursor:pointer}
   <div class="mbtns"><button class="mbtn mcan" onclick="closeOv('mom')">취소</button><button class="mbtn mpri" onclick="saveMonth()">추가</button></div>
 </div></div>
 <script>
-const PW='1115';
+const PW_ADMIN='bdmx1566';const PW_VIEW='bdmx0000';let IS_ADMIN=false;
 const ROLES={'운영진':0,'부운영진':1};
 const FB_CONFIG={apiKey:"AIzaSyCVMPr4LJ1RltXDJvXmemSqYtU3b3dtQe0",authDomain:"badmax-6cf9c.firebaseapp.com",databaseURL:"https://badmax-6cf9c-default-rtdb.firebaseio.com",projectId:"badmax-6cf9c",storageBucket:"badmax-6cf9c.firebasestorage.app",messagingSenderId:"979687274378",appId:"1:979687274378:web:37cebecad86beb0d55fa73"};
 let db=null;try{firebase.initializeApp(FB_CONFIG);db=firebase.database();}catch(e){}
@@ -409,17 +410,17 @@ function ld(){if(db){setSS('connecting');db.ref('club').on('value',snap=>{if(_sa
 const bad=['2027-01'];let cleaned=false;bad.forEach(k=>{const idx=D.months.findIndex(x=>x.key===k);if(idx>=0){D.months.splice(idx,1);cleaned=true;}});initVR();R._ri=true;if(cleaned)sv();}}else{D=JSON.parse(JSON.stringify(INIT));db.ref('club').set(JSON.parse(JSON.stringify(INIT)));}R.acct=D.acct||'';setSS('ok');render();});db.ref('.info/connected').on('value',s=>{if(!s.val())setSS('offline');});}else{try{const r=localStorage.getItem('bm_club_v2');if(r){D=normD(JSON.parse(r));return;}}catch(e){}D=JSON.parse(JSON.stringify(INIT));}}
 function setSS(s){const dot=document.getElementById('sync-dot');if(!dot)return;dot.style.display='flex';const map={ok:{c:'#22c55e',t:'실시간 연결됨'},saving:{c:'#f59e0b',t:'저장 중...'},connecting:{c:'#f59e0b',t:'연결 중...'},offline:{c:'#ef4444',t:'오프라인'},error:{c:'#ef4444',t:'저장 오류'}};const st=map[s]||map.ok;document.getElementById('sync-icon').style.background=st.c;document.getElementById('sync-txt').textContent=st.t;}
 function initVR(){R.hiddenCols=new Set();const now=new Date(),cur=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;R.cm=D.months.find(m=>m.key===cur)?.key||D.months[D.months.length-1]?.key||R.cm;R.activeYear=parseInt(D.months.find(m=>m.key===R.cm)?.key.substring(0,4))||now.getFullYear();}
-function startApp(){document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';if(db){R.cm=R.cm||M3;ld();}else{ld();initVR();render();}}
-function doLogin(){if(document.getElementById('pw').value===PW){try{localStorage.setItem('bm_auth','1');}catch(e){}startApp();}else document.getElementById('lerr').textContent='비밀번호가 올바르지 않습니다.';}
-function doLogout(){try{localStorage.removeItem('bm_auth');}catch(e){}document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('pw').value='';document.getElementById('lerr').textContent='';}
-window.addEventListener('DOMContentLoaded',()=>{try{if(localStorage.getItem('bm_auth')==='1')startApp();}catch(e){}});
+function startApp(){IS_ADMIN=IS_ADMIN||(()=>{try{return localStorage.getItem('bm_auth')==='admin';}catch(e){return false;}})();document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';if(db){R.cm=R.cm||M3;ld();}else{ld();initVR();render();}}
+function doLogin(){const pw=document.getElementById('pw').value;if(pw===PW_ADMIN){IS_ADMIN=true;try{localStorage.setItem('bm_auth','admin');}catch(e){}startApp();}else if(pw===PW_VIEW){IS_ADMIN=false;try{localStorage.setItem('bm_auth','view');}catch(e){}startApp();}else document.getElementById('lerr').textContent='비밀번호가 올바르지 않습니다.';}
+function doLogout(){IS_ADMIN=false;try{localStorage.removeItem('bm_auth');}catch(e){}document.getElementById('login').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('pw').value='';document.getElementById('lerr').textContent='';}
+window.addEventListener('DOMContentLoaded',()=>{try{const a=localStorage.getItem('bm_auth');if(a==='admin'){IS_ADMIN=true;startApp();}else if(a==='view'){IS_ADMIN=false;startApp();}}catch(e){}});
 function nk(){const n=new Date();return`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;}
 function isNA(m,k){return m.startMonth&&k<m.startMonth;}
 function inPlan(m,k){if(!m.plan||m.plan.type!=='선납')return false;return(m.plan.ranges||[{start:m.plan.start,end:m.plan.end}]).some(r=>k>=r.start&&k<=r.end);}
 function isPaid(m,k){if(m.exempt)return true;if(isNA(m,k))return true;if(m.lateKeys&&(m.lateKeys[k]||Object.values(m.lateKeys).includes(k)))return true;if(inPlan(m,k))return true;return!!m.pay[k];}
 function getFee(m,k){if(m.exempt)return 0;if(m.amt&&m.amt[k]!=null)return m.amt[k];if(m.plan&&m.plan.type==='선납'){const ranges=m.plan.ranges||[{start:m.plan.start,end:m.plan.end,amount:m.plan.amount}];for(const r of ranges)if(k===r.start&&r.amount>0)return r.amount;}if(m.lateKeys&&Object.values(m.lateKeys).includes(k)){const base=m.memberFee||(D.months.find(x=>x.key===k)?.fee||5000);return base*(Object.keys(m.lateKeys).filter(x=>m.lateKeys[x]===k).length+1);}return m.memberFee||(D.months.find(x=>x.key===k)?.fee||5000);}
-function planPos(m,k){if(!m.plan||m.plan.type!=='선납')return null;const vis=D.months.filter(x=>!R.hiddenCols.has(x.key)).map(x=>x.key);for(const r of(m.plan.ranges||[{start:m.plan.start,end:m.plan.end}])){if(k<r.start||k>r.end)continue;const vir=vis.filter(v=>v>=r.start&&v<=r.end);if(!vir.length)return null;const isS=k===vir[0],isE=k===vir[vir.length-1];return vir.length===1?'solo':isS?'start':isE?'end':'mid';}return null;}
-function latePos(m,k){if(!m.lateKeys)return null;const isPayK=Object.values(m.lateKeys).includes(k);const isMissK=!!m.lateKeys[k];if(!isPayK&&!isMissK)return null;const payK=isMissK?m.lateKeys[k]:k;const vis=D.months.filter(x=>!R.hiddenCols.has(x.key)).map(x=>x.key);const missKeys=Object.keys(m.lateKeys).filter(x=>m.lateKeys[x]===payK).sort().filter(x=>vis.includes(x));const allKeys=[...missKeys,payK].filter((v,i,a)=>a.indexOf(v)===i).sort().filter(x=>vis.includes(x));if(!allKeys.length)return null;const payIdx=allKeys.indexOf(payK);const isPrePay=payIdx===0,isPostPay=payIdx===allKeys.length-1;const pfx=isPrePay?'pre':isPostPay?'late':'part';if(allKeys.length===1)return pfx+'-solo';const kIsFirst=k===allKeys[0];if(pfx==='part'){if(allKeys.length===1)return'part-solo';const kIdx=allKeys.indexOf(k),payKIdx=allKeys.indexOf(payK);if(kIdx<0)return null;if(isPayK){return kIdx===0?'part-solo':kIdx===allKeys.length-1?'part-end':'part-pay';}return kIdx===0?'part-start':kIdx===allKeys.length-1?'part-end-tail':'part-mid';}if(isPayK)return kIsFirst?(pfx+'-solo'):(pfx+'-end');return kIsFirst?(pfx+'-start'):(pfx+'-mid');}
+function planPos(m,k){if(!m.plan||m.plan.type!=='선납')return null;const ay=String(R.activeYear||new Date().getFullYear());const vis=D.months.filter(x=>!R.hiddenCols.has(x.key)&&x.key.startsWith(ay)).map(x=>x.key);for(const r of(m.plan.ranges||[{start:m.plan.start,end:m.plan.end}])){if(k<r.start||k>r.end)continue;const vir=vis.filter(v=>v>=r.start&&v<=r.end);if(!vir.length)return null;const isS=k===vir[0],isE=k===vir[vir.length-1];return vir.length===1?'solo':isS?'start':isE?'end':'mid';}return null;}
+function latePos(m,k){if(!m.lateKeys)return null;const isPayK=Object.values(m.lateKeys).includes(k);const isMissK=!!m.lateKeys[k];if(!isPayK&&!isMissK)return null;const payK=isMissK?m.lateKeys[k]:k;const ay=String(R.activeYear||new Date().getFullYear());const vis=D.months.filter(x=>!R.hiddenCols.has(x.key)&&x.key.startsWith(ay)).map(x=>x.key);const missKeys=Object.keys(m.lateKeys).filter(x=>m.lateKeys[x]===payK).sort().filter(x=>vis.includes(x));const allKeys=[...missKeys,payK].filter((v,i,a)=>a.indexOf(v)===i).sort().filter(x=>vis.includes(x));if(!allKeys.length)return null;const payIdx=allKeys.indexOf(payK);const isPrePay=payIdx===0,isPostPay=payIdx===allKeys.length-1;const pfx=isPrePay?'pre':isPostPay?'late':'part';if(allKeys.length===1)return pfx+'-solo';const kIsFirst=k===allKeys[0];if(pfx==='part'){if(allKeys.length===1)return'part-solo';const kIdx=allKeys.indexOf(k),payKIdx=allKeys.indexOf(payK);if(kIdx<0)return null;if(isPayK){return kIdx===0?'part-solo':kIdx===allKeys.length-1?'part-end':'part-pay';}return kIdx===0?'part-start':kIdx===allKeys.length-1?'part-end-tail':'part-mid';}if(isPayK)return kIsFirst?(pfx+'-solo'):(pfx+'-end');return kIsFirst?(pfx+'-start'):(pfx+'-mid');}
 const REL_ORDER={'배우자':0,'자녀':1,'부모':2,'형제/자매':3};
 function setMode(v){R.mode=v;['def','alpha','fam'].forEach(k=>document.getElementById('ms-'+k).classList.toggle('on',k===v));render();}
 function pickHead(grp){const ldr=grp.find(m=>m.fgLeader);if(ldr)return{head:ldr,subs:grp.filter(m=>m.id!==ldr.id).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9))};const s=[...grp].sort((a,b)=>a.id-b.id);return{head:s[0],subs:s.slice(1).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9))};}
@@ -448,20 +449,24 @@ function render(){
   document.getElementById('ubtn').classList.toggle('on',R.fu);
   const vis=D.months.filter(m=>!R.hiddenCols.has(m.key)&&m.key.startsWith(ay));
   const fv=vis[0]?.key,lv=vis[vis.length-1]?.key;
-  const hB=fv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key<fv):[];
-  const hA=lv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>lv):[];
-  const tots={},pcnt={};
-  vis.forEach(mo=>{tots[mo.key]=D.members.filter(m=>(!m.exempt&&isPaid(m,mo.key))||(m.exempt&&ROLES[m.role]!==undefined&&m.pay&&m.pay[mo.key])).reduce((s,m)=>s+(m.exempt?( m.memberFee||(D.months.find(x=>x.key===mo.key)?.fee||5000)):getFee(m,mo.key)),0);pcnt[mo.key]=D.members.filter(m=>(!m.exempt&&isPaid(m,mo.key))||(m.exempt&&ROLES[m.role]!==undefined&&m.pay&&m.pay[mo.key])).length;});
-  const ps=`background:white;border:1.5px solid #c7d2fe;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;font-weight:700;color:var(--b);vertical-align:middle;flex-shrink:0`;
+  const hB=fv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key<fv&&m.key.startsWith(ay)):[];
+  const hA=lv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>lv&&m.key.startsWith(ay)):[];
+  const ps=`background:white;border:1.5px solid #c7d2fe;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;color:#4f46e5;user-select:none;flex-shrink:0`;
   const prevB=hB.length?`<span style="${ps};margin-right:3px" onclick="event.stopPropagation();showPrev()" title="${hB[hB.length-1].label}">◀</span>`:'';
   const nextB=hA.length?`<span style="${ps};margin-left:3px" onclick="event.stopPropagation();showNext()" title="${hA[0].label}">▶</span>`:'';
-  function gTh(pv,nv){const hb=D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>pv&&m.key<nv);return hb.length?`<th class="col-gap-th" onclick="revealBetween('${pv}','${nv}')" title="${hb[0].label} 보기">…</th>`:'';}
-  function gTd(pv,nv){const hb=D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>pv&&m.key<nv);return hb.length?`<td class="col-gap-td"></td>`:'';}
+  const tots={},pcnt={};
+  vis.forEach(mo=>{tots[mo.key]=D.members.filter(m=>(!m.exempt&&isPaid(m,mo.key))||(m.exempt&&ROLES[m.role]!==undefined&&m.pay&&m.pay[mo.key])).reduce((s,m)=>s+(m.exempt?( m.memberFee||(D.months.find(x=>x.key===mo.key)?.fee||5000)):getFee(m,mo.key)),0);pcnt[mo.key]=D.members.filter(m=>(!m.exempt&&isPaid(m,mo.key))||(m.exempt&&ROLES[m.role]!==undefined&&m.pay&&m.pay[mo.key])).length;});
+
+  function gTh(pv,nv){const hb=D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>pv&&m.key<nv);return hb.length?`<th style='width:20px;min-width:20px;padding:0;text-align:center;cursor:pointer;background:#f1f5f9;border-left:1px solid #cbd5e1;border-right:1px solid #cbd5e1;font-size:8px;color:#6366f1;font-weight:700;letter-spacing:-1px' onclick="revealBetween('${pv}','${nv}')" title='${hb.length}개월 숨김'>◀▶</th>`:'';}  function gTd(pv,nv){const hb=D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>pv&&m.key<nv);return hb.length?`<td style='width:20px;min-width:20px;padding:0;background:#f1f5f9;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0'></td>`:'';}
   let h1=`<tr class="th-tot"><th style="text-align:left;min-width:180px;width:180px">합계</th>`;
   vis.forEach((mo,i)=>{if(i>0)h1+=gTh(vis[i-1].key,mo.key);h1+=`<th style="min-width:86px;width:86px">${tots[mo.key].toLocaleString()}원<br><span style="font-size:9px;font-weight:400;color:var(--tx2)">${pcnt[mo.key]}명</span></th>`;});
   h1+=`<th style="width:36px;min-width:36px"></th></tr>`;
   let h2=`<tr class="th-mon"><th style="text-align:left;min-width:180px;width:180px">회원</th>`;
-  vis.forEach((mo,i)=>{if(i>0)h2+=gTh(vis[i-1].key,mo.key);const lb=i===0&&prevB?prevB:'',rb=i===vis.length-1&&nextB?nextB:'';h2+=`<th class="clickable${mo.key===now?' th-cur':''}" onclick="toggleCol('${mo.key}')" style="min-width:86px;width:86px">${lb}${mo.label}${rb}</th>`;});
+  vis.forEach((mo,i)=>{
+    if(i>0)h2+=gTh(vis[i-1].key,mo.key);
+    const lb=i===0?prevB:'',rb=i===vis.length-1?nextB:'';
+    h2+=`<th class="clickable${mo.key===now?' th-cur':''}" onclick="toggleCol('${mo.key}')" style="min-width:86px;width:86px">${lb}${mo.label}${rb}</th>`;
+  });
   h2+=`<th style="width:36px;min-width:36px;text-align:center">설정</th></tr>`;
   document.getElementById('th').innerHTML=h1+h2;
   const rows=sorted();const cN=1+vis.length+countGaps(vis)+1;
@@ -480,17 +485,17 @@ function render(){
     let ni;
     if(isSub){ni=`<span class="name-sub" style="flex:1;min-width:0">${m.name}${star}<span class="rel-badge">${m._rel}</span>${m.role==='미성년'?'<span class="rb rb-minor">미성년</span>':''}</span>${yr}${gb}`;}
     else{ni=`<span style="font-weight:${isAdm?600:400};flex:1;min-width:0">${m.name}${star}${isAdm?`<span class="rb rb-adm">${m.role}</span>`:m.role==='미성년'?'<span class="rb rb-minor">미성년</span>':''}${m.fgId&&!isSub?'<span style="font-size:10px;color:var(--tx3);margin-left:2px">👨‍👩</span>':''}</span>${yr}${gb}`;}
-    const pcells=vis.map((mo,i)=>{
-      const gap=i>0?gTd(vis[i-1].key,mo.key):'';const cc=mo.key===now?' td-cur':'';
+    const pcells=vis.map((mo,i)=>{const gap=i>0?gTd(vis[i-1].key,mo.key):'';
+      const cc=mo.key===now?' td-cur':'';
       if(isAdm&&!m.plan){// 운영진 자발납부: —→납부→미납→— 순환
         const isMiss=!!(m.admMiss&&m.admMiss[mo.key]);
         const isPd=!!m.pay[mo.key];
         const admFee=m.memberFee||(D.months.find(x=>x.key===mo.key)?.fee||5000);
         let admInner,admClk='';
-        if(isPd){admInner=`<span class="pv pv-ok">${admFee.toLocaleString()}</span>`;admClk=`onclick="admCellClick(${m.id},'${mo.key}')"` ;}
-        else if(isMiss){admInner=`<span class="pv pv-no">미납</span>`;admClk=`onclick="admCellClick(${m.id},'${mo.key}')"` ;}
-        else{admInner=`<span class="pv-dash">—</span>`;admClk=`onclick="admCellClick(${m.id},'${mo.key}')"` ;}
-        return gap+`<td class="pcell${cc}" ${admClk} style="min-width:86px;width:86px"><div style="display:flex;align-items:center;justify-content:center;height:100%;position:relative">${admInner}</div></td>`;
+        if(isPd){admInner=`<span class="pv pv-ok">${admFee.toLocaleString()}</span>`;admClk=`onclick="if(IS_ADMIN)admCellClick(${m.id},'${mo.key}')"` ;}
+        else if(isMiss){admInner=`<span class="pv pv-no">미납</span>`;admClk=`onclick="if(IS_ADMIN)admCellClick(${m.id},'${mo.key}')"` ;}
+        else{admInner=`<span class="pv-dash">—</span>`;admClk=`onclick="if(IS_ADMIN)admCellClick(${m.id},'${mo.key}')"` ;}
+        return (i>0?gTd(vis[i-1].key,mo.key):'')+`<td class="pcell${cc}" ${admClk} style="min-width:86px;width:86px"><div style="display:flex;align-items:center;justify-content:center;height:100%;position:relative">${admInner}</div></td>`;
       }
       if(isEx)return gap+`<td style="text-align:center"><span class="pv-dash">—</span></td>`;
       if(isNA(m,mo.key))return gap+`<td style="text-align:center"><span class="pv-dash">—</span></td>`;
@@ -523,19 +528,24 @@ function render(){
       else inner=`<span class="pv pv-no">미납</span>`;
       const locked=!!pp;let clk='';
       if(!locked&&!lp){if(pd)clk=`onclick="cancelPay(${m.id},'${mo.key}')"`;else clk=`onclick="doPay(${m.id},'${mo.key}')"` ;}
-      return gap+`<td class="pcell${cc}" ${clk} style="min-width:86px;width:86px"><div style="display:flex;align-items:center;justify-content:center;height:100%;position:relative">${inner}</div></td>`;
+      return (i>0?gTd(vis[i-1].key,mo.key):'')+`<td class="pcell${cc}" ${clk} style="min-width:86px;width:86px"><div style="display:flex;align-items:center;justify-content:center;height:100%;position:relative">${inner}</div></td>`;
     }).join('');
-    return`<tr class="${rCls}${actCls}" style="cursor:pointer"><td style="min-width:180px;width:180px" ondblclick="openEM(${m.id})"><div class="name-cell">${ni}</div></td>${pcells}<td style="text-align:center;padding:0 2px;white-space:nowrap;width:36px;min-width:36px">${(isEx&&!isAdm)?'':`<button class="tbtn" onclick="openPM(${m.id})" style="padding:3px 6px;font-size:11px;color:var(--yw)">💰</button>`}</td></tr>`;
+    return`<tr class="${rCls}${actCls}" style="cursor:pointer"><td style="min-width:180px;width:180px" ondblclick="openEM(${m.id})"><div class="name-cell">${ni}</div></td>${pcells}<td style="text-align:center;padding:0 2px;white-space:nowrap;width:36px;min-width:36px">${(isEx&&!isAdm)?'':`${IS_ADMIN?'<button class="tbtn" onclick="openPM('+m.id+')" style="padding:3px 6px;font-size:11px;color:var(--yw)">💰</button>':''}`}</td></tr>`;
   }).join('');
   document.getElementById('tb').innerHTML=trs||`<tr><td colspan="${cN}" class="empty">회원 없음</td></tr>`;
 
   // 헤더-바디 열너비 동기화 + 가로 스크롤 연동
   syncHeadWidths();
-  const _bd=document.getElementById('tw-body'),_hd=document.getElementById('tw-head');
-  if(_bd&&_hd)_bd.onscroll=()=>{_hd.scrollLeft=_bd.scrollLeft;};
+
 
   renderUnpaid(cm);
+  // 열람모드 UI 처리
+  document.querySelectorAll('.adm-only').forEach(el=>el.style.display=IS_ADMIN?'':'none');
+  const addBtn=document.getElementById('btn-add-member');
+  if(addBtn)addBtn.style.display=IS_ADMIN?'':'none';
+  document.querySelectorAll('.mtab-add').forEach(el=>el.style.display=IS_ADMIN?'':'none');
 }
+
 function countGaps(vis){let c=0;for(let i=1;i<vis.length;i++){if(D.months.some(m=>R.hiddenCols.has(m.key)&&m.key>vis[i-1].key&&m.key<vis[i].key))c++;}return c;}
 function renderUnpaid(cm){if(!cm)cm=D.months.find(x=>x.key===R.cm);if(!cm)return;const unpaid=D.members.filter(m=>!m.exempt&&m.role!=='미성년'&&!isPaid(m,cm.key));const acct=document.getElementById('acct-input')?.value||R.acct||'';const acctLine=acct?`\n\n💳 ${acct}`:'';  const txt=unpaid.length?`[${cm.label} 회비 미납 안내]\n\n${unpaid.map(m=>'@'+m.name).join(' ')} 님,\n이번 달 회비 납부 부탁드립니다 🏸${acctLine}`:`✅ ${cm.label} 전원 납부 완료!`;document.getElementById('ubox').innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px"><div class="ut" style="margin:0">⚠️ ${cm.label} 미납자 확인</div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--tx2);white-space:nowrap">계좌번호</span><input id="acct-input" class="fi" type="text" value="${acct}" placeholder="예: 국민 123-456-789" style="font-size:11px;padding:4px 8px;width:260px" oninput="R.acct=this.value;D.acct=this.value;sv();updateKakaoText()" onkeydown="event.stopPropagation()" onkeypress="event.stopPropagation()"></div></div><div style="margin-bottom:8px;font-size:12px;color:var(--tx2)">${cm.label} 미납 <strong style="color:var(--r)">${unpaid.length}명</strong></div><div class="chips">${unpaid.length?unpaid.map(m=>`<span class="chip">${m.name}</span>`).join(''):`<span class="ok-chip">✅ ${cm.label} 전원 납부 완료!</span>`}</div><div class="kbox" id="kbox" contenteditable="true">${txt.replace(/\n/g,'<br>')}</div><div class="krow"><span class="knote">카카오톡에 바로 붙여넣기</span><button class="kbtn" id="copybtn" onclick="copyKakao()">📋 복사</button></div>`;}
 function updateKakaoText(){const cm=D.months.find(x=>x.key===R.cm)||D.months[D.months.length-1];if(!cm)return;const kbox=document.getElementById('kbox');if(!kbox)return;const unpaid=D.members.filter(m=>!m.exempt&&m.role!=='미성년'&&!isPaid(m,cm.key));const acct=R.acct||'';const acctLine=acct?`\n\n💳 ${acct}`:'';const txt=unpaid.length?`[${cm.label} 회비 미납 안내]\n\n${unpaid.map(m=>'@'+m.name).join(' ')} 님,\n이번 달 회비 납부 부탁드립니다 🏸${acctLine}`:`✅ ${cm.label} 전원 납부 완료!`;kbox.innerHTML=txt.replace(/\n/g,'<br>');}
@@ -551,14 +561,25 @@ m.pay[key]=true;}sv();render();}
 function doPay(id,key){const m=D.members.find(x=>x.id===id);if(!m)return;if(m.plan&&m.plan.type==='선납'&&inPlan(m,key))return;m.pay[key]=true;if(m.fgId){D.members.filter(x=>x.fgId===m.fgId&&x.id!==id&&!isPaid(x,key)).sort((a,b)=>(REL_ORDER[a.fgRel]??9)-(REL_ORDER[b.fgRel]??9)).forEach(fm=>{if(confirm(`${fm.name}님도 납부 처리할까요?`))fm.pay[key]=true;});}sv();render();}
 function cancelPay(id,key){const m=D.members.find(x=>x.id===id);if(!m)return;delete m.pay[key];if(m.amt)delete m.amt[key];sv();render();}
 function toggleCol(k){if(!R.hiddenCols.has(k)){R.hiddenCols.add(k);render();}}
-function showPrev(){const vis=D.months.filter(m=>!R.hiddenCols.has(m.key));const fv=vis[0]?.key;const b=fv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key<fv):[];if(b.length){R.hiddenCols.delete(b[b.length-1].key);render();}}
-function showNext(){const vis=D.months.filter(m=>!R.hiddenCols.has(m.key));const lv=vis[vis.length-1]?.key;const a=lv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>lv):[];if(a.length){R.hiddenCols.delete(a[0].key);render();}}
-function revealBetween(ak,bk){const b=D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>ak&&m.key<bk);if(b.length){R.hiddenCols.delete(b[0].key);render();}}
+function showPrev(){const ay=String(R.activeYear||new Date().getFullYear());const vis=D.months.filter(m=>!R.hiddenCols.has(m.key)&&m.key.startsWith(ay));const fv=vis[0]?.key;const b=fv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key<fv&&m.key.startsWith(ay)):[];if(b.length){R.hiddenCols.delete(b[b.length-1].key);render();}}
+function showNext(){const ay=String(R.activeYear||new Date().getFullYear());const vis=D.months.filter(m=>!R.hiddenCols.has(m.key)&&m.key.startsWith(ay));const lv=vis[vis.length-1]?.key;const a=lv?D.months.filter(m=>R.hiddenCols.has(m.key)&&m.key>lv&&m.key.startsWith(ay)):[];if(a.length){R.hiddenCols.delete(a[0].key);render();}}
+function revealBetween(ak,bk){D.months.filter(m=>R.hiddenCols.has(m.key)&&(ak==='0000-00'||m.key>ak)&&(bk==='9999-99'||m.key<bk)).forEach(m=>R.hiddenCols.delete(m.key));render();}
 function onFamSel(){const v=!!document.getElementById('ffm').value;document.getElementById('ffrw').style.display=v?'':'none';document.getElementById('ffleader-row').style.display=v?'':'none';}
 function openMM(){EID=null;document.getElementById('mm-t').textContent='👤 회원 추가';document.getElementById('mm-s').textContent='추가';document.getElementById('mm-danger').style.display='none';['fn','fy','fm','frc','f-fee','f-start','f-tel'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-tel-call').style.display='none';document.getElementById('ffleader').checked=false;setGender('남');document.getElementById('fr').value='일반';document.getElementById('frcw').style.display='none';fillFamDrop(null,null,null);document.getElementById('mm').classList.add('on');setTimeout(()=>document.getElementById('fn').focus(),100);}
-function openEM(id){const m=D.members.find(x=>x.id===id);if(!m)return;ACTIVE_ID=id;EID=id;document.getElementById('mm-t').textContent='✏️ 회원 정보 수정';document.getElementById('mm-s').textContent='저장';document.getElementById('mm-danger').style.setProperty('display','flex');document.getElementById('fn').value=m.name;document.getElementById('fy').value=m.year;setGender(m.g);const std=['운영진','부운영진','일반','미성년'];if(std.includes(m.role)){document.getElementById('fr').value=m.role;document.getElementById('frcw').style.display='none';}else{document.getElementById('fr').value='기타';document.getElementById('frc').value=m.role;document.getElementById('frcw').style.display='';}document.getElementById('fm').value=m.memo||'';document.getElementById('f-fee').value=m.memberFee||'';document.getElementById('f-start').value=m.startMonth||'';const spId=m.fgId?D.members.find(x=>x.fgId===m.fgId&&x.id!==id)?.id:null;fillFamDrop(id,spId,m.fgRel||'배우자',m.fgLeader);document.getElementById('f-tel').value=m.phone||'';const ca=document.getElementById('f-tel-call');if(m.phone){ca.href='tel:'+m.phone.replace(/[^0-9+]/g,'');ca.style.display='';}else{ca.style.display='none';}document.getElementById('mm').classList.add('on');}
+function openEM(id){const m=D.members.find(x=>x.id===id);if(!m)return;ACTIVE_ID=id;EID=id;document.getElementById('mm-t').textContent='✏️ 회원 정보 수정';document.getElementById('mm-s').textContent='저장';document.getElementById('mm-danger').style.setProperty('display','flex');document.getElementById('fn').value=m.name;document.getElementById('fy').value=m.year;setGender(m.g);const std=['운영진','부운영진','일반','미성년'];if(std.includes(m.role)){document.getElementById('fr').value=m.role;document.getElementById('frcw').style.display='none';}else{document.getElementById('fr').value='기타';document.getElementById('frc').value=m.role;document.getElementById('frcw').style.display='';}document.getElementById('fm').value=m.memo||'';document.getElementById('f-fee').value=m.memberFee||'';document.getElementById('f-start').value=m.startMonth||'';const spId=m.fgId?D.members.find(x=>x.fgId===m.fgId&&x.id!==id)?.id:null;fillFamDrop(id,spId,m.fgRel||'배우자',m.fgLeader);document.getElementById('f-tel').value=m.phone||'';const ca=document.getElementById('f-tel-call');if(m.phone){ca.href='tel:'+m.phone.replace(/[^0-9+]/g,'');ca.style.display='';}else{ca.style.display='none';}// 열람모드: 탈퇴/삭제 숨김, 회비설정+이름+연도+성별+가족 비활성화, 저장은 허용
+const danger=document.getElementById('mm-danger');
+if(danger)danger.style.display=IS_ADMIN?'flex':'none';
+const pmBtn=document.querySelector('#mm .mpri');
+if(pmBtn){pmBtn.disabled=false;pmBtn.style.opacity='1';pmBtn.title='';}
+// 열람모드 비활성화 필드
+['fn','fy','fg2-m','fg2-f','fr','frc','ffm','ffr','f-fee','f-start'].forEach(id=>{
+  const el=document.getElementById(id);if(!el)return;
+  el.disabled=!IS_ADMIN;el.style.opacity=IS_ADMIN?'1':'0.5';el.style.cursor=IS_ADMIN?'':'not-allowed';
+});
+document.getElementById('ffleader').disabled=!IS_ADMIN;
+document.getElementById('mm').classList.add('on');}
 function fillFamDrop(exId,curId,curRel,curLeader){const sel=document.getElementById('ffm');sel.innerHTML='<option value="">연결 안 함</option>';D.members.filter(m=>m.id!==exId).forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=`${m.name} (${m.role})`;sel.appendChild(o);});sel.value=curId||'';const sv2=!!curId;document.getElementById('ffrw').style.display=sv2?'':'none';document.getElementById('ffleader-row').style.display=sv2?'':'none';if(curRel)document.getElementById('ffr').value=curRel;if(curLeader!==undefined)document.getElementById('ffleader').checked=!!curLeader;}
-function saveMember(){const name=document.getElementById('fn').value.trim();if(!name){alert('이름을 입력해주세요.');return;}const year=parseInt(document.getElementById('fy').value)||1990,g=document.getElementById('fg2').value;let role=document.getElementById('fr').value;if(role==='기타')role=document.getElementById('frc').value.trim()||'기타';const memo=document.getElementById('fm').value.trim(),phone=document.getElementById('f-tel').value.trim(),famSel=document.getElementById('ffm').value,famRel=document.getElementById('ffr').value;if(role==='미성년'&&!famSel){alert('미성년 회원은 보호자를 반드시 연결해야 합니다.');return;}const mFee=parseInt(document.getElementById('f-fee').value)||null,sMo=document.getElementById('f-start').value||null,isLdr=document.getElementById('ffleader').checked;if(EID){const m=D.members.find(x=>x.id===EID);Object.assign(m,{name,year,g,role,memo,phone,memberFee:mFee,startMonth:sMo});if(famSel){const t=D.members.find(x=>x.id==famSel);if(t){const fg=t.fgId||('fg_'+Date.now());t.fgId=fg;if(!t.fgRel)t.fgRel=famRel;m.fgId=fg;m.fgRel=famRel;if(isLdr){D.members.filter(x=>x.fgId===fg).forEach(x=>{x.fgLeader=false;});m.fgLeader=true;}else m.fgLeader=false;}}else{m.fgId=null;m.fgRel='';m.fgLeader=false;}}else{const id=Date.now();let fgId=null,fgRel='';if(famSel){const t=D.members.find(x=>x.id==famSel);if(t){fgId=t.fgId||('fg_'+Date.now());t.fgId=fgId;if(!t.fgRel)t.fgRel=famRel;fgRel=famRel;if(isLdr)D.members.filter(x=>x.fgId===fgId).forEach(x=>{x.fgLeader=false;});}}D.members.push({id,name,year,g,role,fgId,fgRel,fgLeader:isLdr,pay:{},amt:{},plan:null,memo,phone,memberFee:mFee,startMonth:sMo});}sv();closeOv('mm');render();}
+function saveMember(){const name=document.getElementById('fn').value.trim();if(!name){alert('이름을 입력해주세요.');return;}const memo=document.getElementById('fm').value.trim(),phone=document.getElementById('f-tel').value.trim();if(!IS_ADMIN){if(EID){const m=D.members.find(x=>x.id===EID);if(m){m.memo=memo;m.phone=phone;}sv();closeOv('mm');render();}return;}const year=parseInt(document.getElementById('fy').value)||1990,g=document.getElementById('fg2').value;let role=document.getElementById('fr').value;if(role==='기타')role=document.getElementById('frc').value.trim()||'기타';const famSel=document.getElementById('ffm').value,famRel=document.getElementById('ffr').value;if(role==='미성년'&&!famSel){alert('미성년 회원은 보호자를 반드시 연결해야 합니다.');return;}const mFee=parseInt(document.getElementById('f-fee').value)||null,sMo=document.getElementById('f-start').value||null,isLdr=document.getElementById('ffleader').checked;if(EID){const m=D.members.find(x=>x.id===EID);Object.assign(m,{name,year,g,role,memo,phone,memberFee:mFee,startMonth:sMo});if(famSel){const t=D.members.find(x=>x.id==famSel);if(t){const fg=t.fgId||('fg_'+Date.now());t.fgId=fg;if(!t.fgRel)t.fgRel=famRel;m.fgId=fg;m.fgRel=famRel;if(isLdr){D.members.filter(x=>x.fgId===fg).forEach(x=>{x.fgLeader=false;});m.fgLeader=true;}else m.fgLeader=false;}}else{m.fgId=null;m.fgRel='';m.fgLeader=false;}}else{const id=Date.now();let fgId=null,fgRel='';if(famSel){const t=D.members.find(x=>x.id==famSel);if(t){fgId=t.fgId||('fg_'+Date.now());t.fgId=fgId;if(!t.fgRel)t.fgRel=famRel;fgRel=famRel;if(isLdr)D.members.filter(x=>x.fgId===fgId).forEach(x=>{x.fgLeader=false;});}}D.members.push({id,name,year,g,role,fgId,fgRel,fgLeader:isLdr,pay:{},amt:{},plan:null,memo,phone,memberFee:mFee,startMonth:sMo});}sv();closeOv('mm');render();}
 function deleteMember(){const m=D.members.find(x=>x.id===EID);if(!m||!confirm(`'${m.name}' 회원을 삭제할까요?`))return;D.members=D.members.filter(x=>x.id!==EID);sv();closeOv('mm');render();}
 function openWdFromEdit(){closeOv('mm');openWM(EID);}
 function openPM(id){PMI=id;ACTIVE_ID=id;const m=D.members.find(x=>x.id===id);if(!m)return;document.getElementById('pl-name').textContent=m.name;const hasLate=m.lateKeys&&Object.keys(m.lateKeys).length>0;const initTab=hasLate?'부분납':(m.plan?.type==='완납'?'월납':(m.plan?.type||'월납'));setPT(null,initTab);document.getElementById('plm').classList.add('on');}
@@ -669,25 +690,7 @@ function permDel(id){if(!confirm('완전히 삭제합니다. 복구 불가합니
 function openMoM(){const years=[...new Set(D.months.map(m=>m.key.substring(0,4)))].sort();const nextY=parseInt(years[years.length-1]||new Date().getFullYear())+1;document.getElementById('moy').value=nextY;document.getElementById('mo2').value='01';document.getElementById('mom').classList.add('on');}
 function openMoM2(){const ay=String(R.activeYear||new Date().getFullYear());const existing=D.months.filter(m=>m.key.startsWith(ay)).map(m=>parseInt(m.key.substring(5)));const nextMo=existing.length?Math.max(...existing)+1:1;if(nextMo>12){alert(ay+'년 12월까지 모두 추가됐습니다.');return;}document.getElementById('moy').value=ay;document.getElementById('mo2').value=String(nextMo).padStart(2,'0');document.getElementById('mom').classList.add('on');}
 function saveMonth(){const y=document.getElementById('moy').value,mo=document.getElementById('mo2').value;const fee=parseInt(document.getElementById('mofee').value)||5000,key=`${y}-${mo}`;if(D.months.find(x=>x.key===key)){alert('이미 추가된 월입니다.');return;}D.months.push({key,label:`${parseInt(mo)}월`,fee});D.months.sort((a,b)=>a.key.localeCompare(b.key));D.members.forEach(mb=>{if(!mb.plan||mb.plan.type!=='선납')return;const ranges=mb.plan.ranges||[{start:mb.plan.start,end:mb.plan.end}];if(ranges.some(r=>key>=r.start&&key<=r.end))mb.pay[key]=true;});R.cm=key;R.activeYear=parseInt(key.substring(0,4));sv();closeOv('mom');render();}
-function syncHeadWidths(){
-  const hd=document.getElementById('tw-head');
-  const bd=document.getElementById('tw-body');
-  const ht=document.getElementById('head-tbl');
-  const bt=document.getElementById('body-tbl');
-  if(!hd||!bd||!ht||!bt)return;
-  // 일반 행(divr/sectr 아닌 첫 번째 tr) 기준으로 측정
-  const bRow=Array.from(bt.querySelectorAll('tr')).find(r=>!r.classList.contains('divr')&&!r.classList.contains('sectr')&&!r.classList.contains('famgapr'));
-  if(!bRow)return;
-  const bCells=bRow.querySelectorAll('td');
-  const hCells1=ht.querySelectorAll('thead tr:first-child th');
-  const hCells2=ht.querySelectorAll('thead tr:last-child th');
-  bCells.forEach((td,i)=>{
-    const w=td.getBoundingClientRect().width+'px';
-    if(hCells1[i]){hCells1[i].style.width=w;hCells1[i].style.minWidth=w;}
-    if(hCells2[i]){hCells2[i].style.width=w;hCells2[i].style.minWidth=w;}
-  });
-  ht.style.width=bt.getBoundingClientRect().width+'px';
-}
+function syncHeadWidths(){const ht=document.getElementById('head-tbl'),bt=document.getElementById('body-tbl');if(!ht||!bt)return;const bRow=bt.querySelector('tr');if(!bRow)return;const bCells=bRow.querySelectorAll('td');const hCells1=ht.querySelectorAll('thead tr:first-child th');const hCells2=ht.querySelectorAll('thead tr:last-child th');bCells.forEach((td,i)=>{const w=td.getBoundingClientRect().width+'px';if(hCells1[i]){hCells1[i].style.width=w;hCells1[i].style.minWidth=w;}if(hCells2[i]){hCells2[i].style.width=w;hCells2[i].style.minWidth=w;}});ht.style.width=bt.getBoundingClientRect().width+'px';}
 function closeOv(id){document.getElementById(id).classList.remove('on');if(id==='mm'||id==='plm'){ACTIVE_ID=null;render();}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')['mm','plm','wdm','mom'].forEach(closeOv);});
 document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('on');}));
