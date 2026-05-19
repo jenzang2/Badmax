@@ -828,11 +828,21 @@ function checkPublicView(){
     pub.style.display='block';
     const itemIdx=params.get('item')!=null?parseInt(params.get('item')):null;
     const filterMonth=params.get('month')||null;
-    if(db){db.ref('club/tournaments').on('value',snap=>{
-      const ts=snap.val()||[];
-      const arr=Array.isArray(ts)?ts:Object.values(ts);
-      renderPublicT(arr,itemIdx,filterMonth);
-    });}
+    if(db){
+      db.ref('club/tournaments').on('value',snap=>{
+        const ts=snap.val()||[];
+        const arr=Array.isArray(ts)?ts:Object.values(ts);
+        renderPublicT(arr,itemIdx,filterMonth);
+      });
+    } else {
+      // Firebase 없으면 localStorage에서
+      try{
+        const r=localStorage.getItem('bm_club_v2');
+        const data=r?JSON.parse(r):null;
+        const arr=Array.isArray(data?.tournaments)?data.tournaments:[];
+        renderPublicT(arr,itemIdx,filterMonth);
+      }catch(e){renderPublicT([],itemIdx,filterMonth);}
+    }
   }
 }
 
@@ -1253,6 +1263,8 @@ document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(
   <div class="fg"><label>비고</label><input class="fi" id="t-note" placeholder="특이사항..."></div>
   <div class="mbtns"><button class="mbtn mcan" onclick="closeOv('tm')">취소</button><button class="mbtn mpri" onclick="saveT()">저장</button></div>
 </div></div>
+
+<div id="pub-monthly" style="display:none;min-height:100vh;background:#f8f9fb;font-family:'Noto Sans KR',sans-serif"></div>
 
 </body>
 </html>
