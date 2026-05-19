@@ -424,12 +424,12 @@ const INIT={months:[{key:M3,label:'3월',fee:5000},{key:M4,label:'4월',fee:5000
   {id:70,name:'황인성',phone:'010-9215-2424',year:1980,g:'남',role:'일반',fgId:null,fgRel:'',pay:{},amt:{},plan:{type:'선납',ranges:[{start:'2026-01',end:'2026-12',amount:60000,late:false}]},memo:'26년 완납'},
 ]};
 let D={},_saving=false;
-let R={view:'m',cm:M3,q:'',fu:false,mode:'def',hiddenCols:new Set(),_tMonthAsc:false};
+let R={view:'m',cm:M3,q:'',fu:false,mode:'def',hiddenCols:new Set(),_tMonthAsc:false,_tItemAsc:false};
 let ACTIVE_ID=null,EID=null,PMI=null,WMI=null,PT='월납';
 function toArr(v){if(!v)return[];if(Array.isArray(v))return v.filter(Boolean);return Object.values(v).filter(Boolean);}
 function normM(m){if(!m)return null;let plan=m.plan||null;if(plan&&plan.type==='완납'){const yr=plan.year||2026,amt=plan.amount||0;const paidMo=Object.keys(m.amt||{}).find(k=>k.startsWith(String(yr)));plan={type:'선납',ranges:[{start:paidMo||(yr+'-01'),end:yr+'-12',amount:amt,late:false}]};}const pay=(m.pay&&typeof m.pay==='object'&&!Array.isArray(m.pay))?{...m.pay}:{};const amt2=(m.amt&&typeof m.amt==='object'&&!Array.isArray(m.amt))?m.amt:{};const rawLate=(m.lateKeys&&typeof m.lateKeys==='object')?m.lateKeys:{};const cleanLate={};Object.entries(rawLate).forEach(([k,v])=>{if(k!==v)cleanLate[k]=v;});return{...m,pay,amt:amt2,plan,lateKeys:cleanLate,admMiss:(m.admMiss&&typeof m.admMiss==='object')?m.admMiss:{},exempt:!!m.exempt,fgId:m.fgId||null,fgRel:m.fgRel||'',fgLeader:!!m.fgLeader,memberFee:m.memberFee||null,startMonth:m.startMonth||null,phone:m.phone||''};}
-function normD(v){if(!v)return JSON.parse(JSON.stringify(INIT));return{months:toArr(v.months),withdrawn:toArr(v.withdrawn).map(normM).filter(Boolean),members:toArr(v.members).map(normM).filter(Boolean),acct:v.acct||'',tournaments:Array.isArray(v.tournaments)?v.tournaments:[],catOrder:Array.isArray(v.catOrder)?v.catOrder:[]};}function sv(){const snap=JSON.parse(JSON.stringify(D));if(db){_saving=true;setSS('saving');db.ref('club').set(snap).then(()=>{_saving=false;setSS('ok');}).catch(()=>{_saving=false;setSS('error');});}else{try{localStorage.setItem('bm_club_v2',JSON.stringify(snap));}catch(e){}}}
-function ld(){if(db){setSS('connecting');db.ref('club').on('value',snap=>{if(_saving)return;const v=snap.val();if(v&&(v.members||v.months)){D=normD(v);R._tCatOrder=[...(D.catOrder||[])];if(!D.months.find(m=>m.key===R.cm))R.cm=D.months[D.months.length-1]?.key||R.cm;if(!R._ri){// 잘못 추가된 2027-01 제거
+function normD(v){if(!v)return JSON.parse(JSON.stringify(INIT));return{months:toArr(v.months),withdrawn:toArr(v.withdrawn).map(normM).filter(Boolean),members:toArr(v.members).map(normM).filter(Boolean),acct:v.acct||'',tournaments:Array.isArray(v.tournaments)?v.tournaments:[],catOrder:Array.isArray(v.catOrder)?v.catOrder:[],itemOrder:v.itemOrder||'desc'};}function sv(){const snap=JSON.parse(JSON.stringify(D));if(db){_saving=true;setSS('saving');db.ref('club').set(snap).then(()=>{_saving=false;setSS('ok');}).catch(()=>{_saving=false;setSS('error');});}else{try{localStorage.setItem('bm_club_v2',JSON.stringify(snap));}catch(e){}}}
+function ld(){if(db){setSS('connecting');db.ref('club').on('value',snap=>{if(_saving)return;const v=snap.val();if(v&&(v.members||v.months)){D=normD(v);R._tCatOrder=[...(D.catOrder||[])];R._tItemAsc=(D.itemOrder==='asc');if(!D.months.find(m=>m.key===R.cm))R.cm=D.months[D.months.length-1]?.key||R.cm;if(!R._ri){// 잘못 추가된 2027-01 제거
 const bad=['2027-01'];let cleaned=false;bad.forEach(k=>{const idx=D.months.findIndex(x=>x.key===k);if(idx>=0){D.months.splice(idx,1);cleaned=true;}});
 // lateKeys 자기참조 오류 전체 정리
 D.members.forEach(mb=>{if(!mb.lateKeys)return;const before=JSON.stringify(mb.lateKeys);Object.keys(mb.lateKeys).forEach(k=>{if(mb.lateKeys[k]===k)delete mb.lateKeys[k];});if(JSON.stringify(mb.lateKeys)!==before)cleaned=true;});
@@ -493,6 +493,7 @@ function renderT(){
   if(R._tItem==null||R._tItem<0||!curItems.find(t=>t._idx===R._tItem))R._tItem=curItems[0]?._idx??-1;
 
   // 좌측 항목 탭 생성
+  const sortedCurItems=R._tItemAsc?[...curItems]:[...curItems].reverse();
   function makeItemTab(t){
     const isOn=R._tItem===t._idx;
     const catBadge=monthAllItems?`<span style="font-size:9px;padding:1px 5px;border-radius:10px;background:${isOn?'rgba(255,255,255,0.25)':'var(--sf2)'};color:${isOn?'white':'var(--tx3)'};margin-left:3px">${t.category||'기타'}</span>`:'';
@@ -501,7 +502,8 @@ function renderT(){
       <button onclick="shareItem(${t._idx})" title="공유" style="flex-shrink:0;padding:4px 6px;border-radius:6px;border:1px solid var(--bd);font-size:11px;cursor:pointer;background:white;color:var(--tx2)">🔗</button>
     </div>`;
   }
-  const itemTabs=curItems.map(makeItemTab).join('');
+  const sortBtn=`<button onclick="R._tItemAsc=!R._tItemAsc;D.itemOrder=R._tItemAsc?'asc':'desc';sv();renderT()" style="font-size:10px;padding:2px 8px;border-radius:5px;border:1px solid var(--bd);background:white;color:var(--tx2);cursor:pointer;font-family:inherit;white-space:nowrap;margin-bottom:4px;display:block;width:100%">${R._tItemAsc?'최신순 ↓':'오래된순 ↑'}</button>`;
+  const itemTabs=sortBtn+sortedCurItems.map(makeItemTab).join('');
 
   // 우측 상세: 단일 항목 상세
   function makeDetailBlock(t){
@@ -929,6 +931,7 @@ function renderPublicT(ts,focusIdx,filterMonth){
     </div>`;
   // 전체보기 함수 (이 scope에서만 유효)
   el._allTs=ts;el._displayTs=displayTs;el._pageTitle=pageTitle;
+  document.title='🏸 BADMAX ' + pageTitle;
 }
 
 // 전체보기 버튼
