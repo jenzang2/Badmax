@@ -428,9 +428,8 @@ let R={view:'m',cm:M3,q:'',fu:false,mode:'def',hiddenCols:new Set(),_tMonthAsc:f
 let ACTIVE_ID=null,EID=null,PMI=null,WMI=null,PT='월납';
 function toArr(v){if(!v)return[];if(Array.isArray(v))return v.filter(Boolean);return Object.values(v).filter(Boolean);}
 function normM(m){if(!m)return null;let plan=m.plan||null;if(plan&&plan.type==='완납'){const yr=plan.year||2026,amt=plan.amount||0;const paidMo=Object.keys(m.amt||{}).find(k=>k.startsWith(String(yr)));plan={type:'선납',ranges:[{start:paidMo||(yr+'-01'),end:yr+'-12',amount:amt,late:false}]};}const pay=(m.pay&&typeof m.pay==='object'&&!Array.isArray(m.pay))?{...m.pay}:{};const amt2=(m.amt&&typeof m.amt==='object'&&!Array.isArray(m.amt))?m.amt:{};const rawLate=(m.lateKeys&&typeof m.lateKeys==='object')?m.lateKeys:{};const cleanLate={};Object.entries(rawLate).forEach(([k,v])=>{if(k!==v)cleanLate[k]=v;});return{...m,pay,amt:amt2,plan,lateKeys:cleanLate,admMiss:(m.admMiss&&typeof m.admMiss==='object')?m.admMiss:{},exempt:!!m.exempt,fgId:m.fgId||null,fgRel:m.fgRel||'',fgLeader:!!m.fgLeader,memberFee:m.memberFee||null,startMonth:m.startMonth||null,phone:m.phone||''};}
-function normD(v){if(!v)return JSON.parse(JSON.stringify(INIT));return{months:toArr(v.months),withdrawn:toArr(v.withdrawn).map(normM).filter(Boolean),members:toArr(v.members).map(normM).filter(Boolean),acct:v.acct||'',tournaments:Array.isArray(v.tournaments)?v.tournaments:[]};}
-function sv(){const snap=JSON.parse(JSON.stringify(D));if(db){_saving=true;setSS('saving');db.ref('club').set(snap).then(()=>{_saving=false;setSS('ok');}).catch(()=>{_saving=false;setSS('error');});}else{try{localStorage.setItem('bm_club_v2',JSON.stringify(snap));}catch(e){}}}
-function ld(){if(db){setSS('connecting');db.ref('club').on('value',snap=>{if(_saving)return;const v=snap.val();if(v&&(v.members||v.months)){D=normD(v);if(!D.months.find(m=>m.key===R.cm))R.cm=D.months[D.months.length-1]?.key||R.cm;if(!R._ri){// 잘못 추가된 2027-01 제거
+function normD(v){if(!v)return JSON.parse(JSON.stringify(INIT));return{months:toArr(v.months),withdrawn:toArr(v.withdrawn).map(normM).filter(Boolean),members:toArr(v.members).map(normM).filter(Boolean),acct:v.acct||'',tournaments:Array.isArray(v.tournaments)?v.tournaments:[],catOrder:Array.isArray(v.catOrder)?v.catOrder:[]};}function sv(){const snap=JSON.parse(JSON.stringify(D));if(db){_saving=true;setSS('saving');db.ref('club').set(snap).then(()=>{_saving=false;setSS('ok');}).catch(()=>{_saving=false;setSS('error');});}else{try{localStorage.setItem('bm_club_v2',JSON.stringify(snap));}catch(e){}}}
+function ld(){if(db){setSS('connecting');db.ref('club').on('value',snap=>{if(_saving)return;const v=snap.val();if(v&&(v.members||v.months)){D=normD(v);R._tCatOrder=[...(D.catOrder||[])];if(!D.months.find(m=>m.key===R.cm))R.cm=D.months[D.months.length-1]?.key||R.cm;if(!R._ri){// 잘못 추가된 2027-01 제거
 const bad=['2027-01'];let cleaned=false;bad.forEach(k=>{const idx=D.months.findIndex(x=>x.key===k);if(idx>=0){D.months.splice(idx,1);cleaned=true;}});
 // lateKeys 자기참조 오류 전체 정리
 D.members.forEach(mb=>{if(!mb.lateKeys)return;const before=JSON.stringify(mb.lateKeys);Object.keys(mb.lateKeys).forEach(k=>{if(mb.lateKeys[k]===k)delete mb.lateKeys[k];});if(JSON.stringify(mb.lateKeys)!==before)cleaned=true;});
@@ -465,7 +464,7 @@ function renderT(){
   // ── 모드 분기: 월 선택됐으면 해당 월 전체 항목 표시, 아니면 카테고리 탭 모드 ──
   // 카테고리 순서 관리
   const allCats=Object.keys(groups);
-  if(!R._tCatOrder)R._tCatOrder=[];
+  if(!R._tCatOrder||R._tCatOrder.length===0)R._tCatOrder=[...(D.catOrder||[])];
   // 새 카테고리 추가되면 뒤에 붙이고, 없어진 건 제거
   allCats.forEach(c=>{if(!R._tCatOrder.includes(c))R._tCatOrder.push(c);});
   R._tCatOrder=R._tCatOrder.filter(c=>allCats.includes(c));
@@ -480,7 +479,7 @@ function renderT(){
       ondragend="event.currentTarget.style.opacity='1'"
       ondragover="event.preventDefault();event.currentTarget.style.outline='2px solid #4f46e5'"
       ondragleave="event.currentTarget.style.outline=''"
-      ondrop="event.preventDefault();event.currentTarget.style.outline='';const from=parseInt(event.dataTransfer.getData('catIdx'));const to=${i};if(from!==to){const o=[...R._tCatOrder];const [moved]=o.splice(from,1);o.splice(to,0,moved);R._tCatOrder=o;renderT();}"
+      ondrop="event.preventDefault();event.currentTarget.style.outline='';const from=parseInt(event.dataTransfer.getData('catIdx'));const to=${i};if(from!==to){const o=[...R._tCatOrder];const [moved]=o.splice(from,1);o.splice(to,0,moved);R._tCatOrder=o;D.catOrder=o;sv();renderT();}"
       onclick="R._tCat='${c}';R._tItem=-1;renderT()"
       style="padding:5px 14px;border-radius:8px;border:1px solid ${isOn?'#1e1b4b':'var(--bd)'};font-size:12px;cursor:pointer;background:${isOn?'#1e1b4b':'white'};color:${isOn?'white':'var(--tx2)'};font-family:inherit;white-space:nowrap;user-select:none"
     >${c}</button>`;
