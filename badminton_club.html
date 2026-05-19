@@ -463,11 +463,27 @@ function renderT(){
     groups[cat].push({...t,_idx:i});
   });
   // ── 모드 분기: 월 선택됐으면 해당 월 전체 항목 표시, 아니면 카테고리 탭 모드 ──
-  // 카테고리 탭 (월 필터 없을 때만 사용)
-  if(!R._tCat||!groups[R._tCat])R._tCat=Object.keys(groups)[0];
-  const catTabs=Object.keys(groups).map(c=>{
+  // 카테고리 순서 관리
+  const allCats=Object.keys(groups);
+  if(!R._tCatOrder)R._tCatOrder=[];
+  // 새 카테고리 추가되면 뒤에 붙이고, 없어진 건 제거
+  allCats.forEach(c=>{if(!R._tCatOrder.includes(c))R._tCatOrder.push(c);});
+  R._tCatOrder=R._tCatOrder.filter(c=>allCats.includes(c));
+  const orderedCats=R._tCatOrder;
+
+  if(!R._tCat||!groups[R._tCat])R._tCat=orderedCats[0];
+  const catTabs=orderedCats.map((c,i)=>{
     const isOn=R._tCat===c;
-    return`<button onclick="R._tCat='${c}';R._tItem=-1;renderT()" style="padding:5px 14px;border-radius:8px;border:1px solid ${isOn?'#1e1b4b':'var(--bd)'};font-size:12px;cursor:pointer;background:${isOn?'#1e1b4b':'white'};color:${isOn?'white':'var(--tx2)'};font-family:inherit;white-space:nowrap">${c}</button>`;
+    return`<button
+      draggable="true"
+      ondragstart="event.dataTransfer.setData('catIdx','${i}');event.currentTarget.style.opacity='.4'"
+      ondragend="event.currentTarget.style.opacity='1'"
+      ondragover="event.preventDefault();event.currentTarget.style.outline='2px solid #4f46e5'"
+      ondragleave="event.currentTarget.style.outline=''"
+      ondrop="event.preventDefault();event.currentTarget.style.outline='';const from=parseInt(event.dataTransfer.getData('catIdx'));const to=${i};if(from!==to){const o=[...R._tCatOrder];const [moved]=o.splice(from,1);o.splice(to,0,moved);R._tCatOrder=o;renderT();}"
+      onclick="R._tCat='${c}';R._tItem=-1;renderT()"
+      style="padding:5px 14px;border-radius:8px;border:1px solid ${isOn?'#1e1b4b':'var(--bd)'};font-size:12px;cursor:pointer;background:${isOn?'#1e1b4b':'white'};color:${isOn?'white':'var(--tx2)'};font-family:inherit;white-space:nowrap;user-select:none"
+    >${c}</button>`;
   }).join('');
 
   // 월 필터 모드: 해당 월 전체 항목 (카테고리 무관)
@@ -879,7 +895,7 @@ function renderPublicT(ts,focusIdx,filterMonth){
           <td style="padding:6px 12px 6px 28px;font-size:12px;color:var(--tx2);border-bottom:1px solid #f1f5f9">${it.name||''}</td>
           <td style="padding:6px 12px;font-size:11px;text-align:right;border-bottom:1px solid #f1f5f9;color:var(--tx2)">${it.price?(parseInt(it.price)||0).toLocaleString()+'원':''}</td>
           <td style="padding:6px 12px;font-size:11px;text-align:right;border-bottom:1px solid #f1f5f9;color:var(--tx2)">${it.qty||''}</td>
-          <td style="padding:6px 12px;font-size:12px;text-align:right;border-bottom:1px solid #f1f5f9">${(parseInt(it.amount)||0).toLocaleString()}원</td>
+          <td style="padding:6px 12px;font-size:12px;text-align:right;border-bottom:1px solid #f1f5f9;white-space:nowrap">${(parseInt(it.amount)||0).toLocaleString()}원</td>
         </tr>`).join('');
       return`<tr style="background:#f0f4ff">
           <td colspan="4" style="padding:8px 14px;font-size:13px;font-weight:700;border-bottom:1px solid #e2e8f0">
@@ -893,12 +909,12 @@ function renderPublicT(ts,focusIdx,filterMonth){
         <th style="padding:10px 14px;font-size:12px;font-weight:700;text-align:left;color:#64748b">항목</th>
         <th style="padding:10px 14px;font-size:12px;font-weight:700;text-align:right;color:#64748b;width:80px">단가</th>
         <th style="padding:10px 14px;font-size:12px;font-weight:700;text-align:right;color:#64748b;width:50px">수량</th>
-        <th style="padding:10px 14px;font-size:12px;font-weight:700;text-align:right;color:#64748b;width:90px">금액</th>
+        <th style="padding:10px 14px;font-size:12px;font-weight:700;text-align:right;color:#64748b;width:110px;white-space:nowrap">금액</th>
       </tr></thead>
       <tbody>${rows||'<tr><td colspan="4" style="padding:30px;text-align:center;color:#94a3b8;font-size:13px">내역 없음</td></tr>'}</tbody>
       <tfoot><tr style="background:#f0fdf4">
         <td colspan="3" style="padding:10px 14px;font-size:13px;font-weight:700">합계</td>
-        <td style="padding:10px 14px;font-size:13px;font-weight:700;text-align:right;color:#059669">${total.toLocaleString()}원</td>
+        <td style="padding:10px 14px;font-size:13px;font-weight:700;text-align:right;color:#059669;white-space:nowrap">${total.toLocaleString()}원</td>
       </tfoot>
     </table>`;
   }
@@ -908,10 +924,6 @@ function renderPublicT(ts,focusIdx,filterMonth){
         <div style="font-size:24px;font-weight:800;color:#1e1b4b">🏸 BADMAX</div>
         <div style="font-size:15px;font-weight:700;color:#1e1b4b;margin-top:6px">${pageTitle}</div>
       </div>
-      ${(isSingleItem||isMonthFilter)?`<div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
-        <button onclick="showAllPublicT(${JSON.stringify(ts).replace(/"/g,'&quot;')})" style="padding:6px 16px;border-radius:8px;border:1px solid #c7d2fe;background:white;color:#4f46e5;font-size:12px;cursor:pointer;font-family:inherit">전체보기</button>
-        <button id="origin-btn" style="display:none;padding:6px 16px;border-radius:8px;border:1px solid #c7d2fe;background:#eef2ff;color:#4f46e5;font-size:12px;cursor:pointer;font-family:inherit">📌 ${pageTitle}로 돌아가기</button>
-      </div>`:''}
       <div id="pub-table-wrap" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;background:white;box-shadow:0 1px 8px rgba(0,0,0,.06)">
         ${makeTable(displayTs)}
       </div>
